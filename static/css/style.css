@@ -773,4 +773,98 @@ body::after {
         transition-duration: .01ms !important;
     }
 }
-```
+
+/* EXPERIENCE */
+
+.experience-section {
+    padding: 4rem 0;
+    border-top: 1px solid var(--ink);
+}
+
+.section-kicker {
+    color: var(--orange);
+    font-family: var(--mono);
+    font-size: .8rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.experience-section h1 {
+    margin: .4rem 0 1.5rem;
+    font-family: var(--display);
+    font-size: clamp(48px, 7vw, 80px);
+    line-height: .9;
+    letter-spacing: -.06em;
+}
+
+.experience-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+}
+
+.experience-card {
+    padding: 1.25rem;
+    background-color: var(--white);
+    border: var(--border);
+    box-shadow: 5px 5px 0 var(--ink);
+    transform: rotate(-1deg);
+    transition:
+        transform .2s ease,
+        box-shadow .2s ease;
+}
+
+.experience-card:nth-child(even) {
+    transform: rotate(1deg);
+}
+
+.experience-card:hover {
+    transform: translateY(-5px) rotate(0deg);
+    box-shadow: 8px 8px 0 var(--ink);
+}
+
+.experience-category {
+    color: var(--orange);
+    font-family: var(--mono);
+    font-size: .75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.experience-card h2 {
+    margin: .5rem 0;
+    font-family: var(--display);
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.experience-description,
+.empty-state {
+    color: var(--muted);
+    line-height: 1.6;
+}
+
+.experience-status {
+    display: inline-block;
+
+    margin-top: 1rem;
+    padding: 5px 8px;
+
+    border: 1px solid var(--ink);
+
+    font-family: var(--mono);
+    font-size: .7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.empty-state {
+    padding: 2rem;
+
+    border: var(--border);
+
+    background: var(--lime);
+
+    font-weight: 600;
+}
