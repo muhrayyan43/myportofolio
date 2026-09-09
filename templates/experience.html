@@ -54,11 +54,37 @@
         <section class="experience-section" id="experience">
             <div class="container">
 
-                <p class="section-kicker">
-                    Perjalanan saya sejauh ini
-                </p>
+                <div class="experience-intro">
+                    <div>
+                        <p class="section-kicker">
+                            Perjalanan saya sejauh ini
+                        </p>
 
-                <h1>Experience</h1>
+                        <h1>
+                            Experience<span class="experience-star">✦</span>
+                        </h1>
+
+                        <p class="experience-subtitle">
+                            Some roles were planned.<br>
+                            Some just happened.<br>
+                            All of them taught me something.
+                        </p>
+                    </div>
+
+                    <div class="experience-count">
+                        <span class="count-number">
+                            {{ experience_list|length|stringformat:"02d" }}
+                        </span>
+
+                        <span class="count-label">
+                            CHAPTERS
+                        </span>
+
+                        <span class="count-period">
+                            2020 → NOW
+                        </span>
+                    </div>
+                </div>
 
                 <div class="experience-grid">
 
@@ -66,31 +92,83 @@
 
                         <article class="experience-card">
 
-                            <span class="experience-category">
-                                {{ experience.get_category_display }}
-                            </span>
+                            <div class="experience-card-top">
+                                <span class="experience-number">
+                                    {{ forloop.counter|stringformat:"02d" }}
+                                </span>
 
-                            <h2>
-                                {{ experience.title }}
-                            </h2>
+                                <span class="experience-category">
+                                    {{ experience.get_category_display }}
+                                </span>
+                            </div>
 
-                            <p class="experience-description">
-                                {{ experience.description }}
-                            </p>
+                            <div class="experience-card-body">
 
-                            {% if experience.is_ongoing %}
+                                <span class="experience-arrow">
+                                    ↗
+                                </span>
 
-                                <p class="experience-status">
-                                    Sedang berlangsung
+                                <h2>
+                                    {{ experience.title }}
+                                </h2>
+
+                                <div class="experience-period">
+                                    <span>
+                                        {{ experience.started_at|date:"Y" }}
+                                    </span>
+
+                                    <span class="period-arrow">
+                                        →
+                                    </span>
+
+                                    {% if experience.is_ongoing %}
+                                        <span>NOW</span>
+                                    {% else %}
+                                        <span>{{ experience.ended_at|date:"Y" }}</span>
+                                    {% endif %}
+                                </div>
+
+                                <p class="experience-description">
+                                    {{ experience.description }}
                                 </p>
 
-                            {% else %}
+                            </div>
 
-                                <p class="experience-status">
-                                    Selesai
-                                </p>
+                            <div class="experience-card-bottom">
 
-                            {% endif %}
+                                {% if experience.is_ongoing %}
+
+                                    <span class="experience-status status-now">
+                                        ● NOW
+                                        <span class="status-accessibility">
+                                            Sedang berlangsung
+                                        </span>
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="experience-status status-completed">
+                                        ✓ COMPLETED
+                                        <span class="status-accessibility">
+                                            Selesai
+                                        </span>
+                                    </span>
+
+                                {% endif %}
+
+                                <span class="experience-doodle">
+                                    {% if forloop.counter == 1 %}
+                                        +
+                                    {% elif forloop.counter == 2 %}
+                                        ✦
+                                    {% elif forloop.counter == 3 %}
+                                        *
+                                    {% else %}
+                                        ↗
+                                    {% endif %}
+                                </span>
+
+                            </div>
 
                         </article>
 
