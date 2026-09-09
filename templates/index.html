@@ -1,20 +1,41 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f3efe4">
     <title>Rayyan - Portfolio</title>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@10..48,500;10..48,700;10..48,800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap"
+        rel="stylesheet"
+    >
+
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
+
 <body>
+    <div class="page-noise" aria-hidden="true"></div>
+
     <header class="site-header">
-        <div class="container">
-            <a href="#profile" class="brand">Rayyan</a>
-            <nav>
-                <a href="#profile">Profile</a>
+        <div class="container header-inner">
+            <a href="#profile" class="brand" aria-label="Rayyan home">
+                <span class="brand-mark">R</span>
+                <span>Rayyan</span>
+            </a>
+
+            <div class="header-note">
+                PORTFOLIO / 2026
+            </div>
+
+            <nav aria-label="Primary navigation">
+                <a href="#profile">
+                    Profile <span>↗</span>
+                </a>
             </nav>
         </div>
     </header>
@@ -22,40 +43,133 @@
     <main>
         <section class="hero" id="profile">
             <div class="container hero-grid">
+
                 <div class="hero-identity">
-                    <p class="hero-kicker">Information Systems &middot; Universitas Indonesia</p>
-                    <h1>Rayyan</h1>
+                    <div class="eyebrow">
+                        <span class="dot"></span>
+                        Information Systems · Universitas Indonesia
+                    </div>
+
+                    <p class="identity-intro">
+                        student / builder / curious mind
+                    </p>
+
+                    <h1 class="hero-name">
+                        <span class="name-first">Muhammad</span>
+                        <span class="name-main">
+                            Rayyan<span class="asterisk">*</span>
+                        </span>
+                        <span class="name-last">Basalamah</span>
+                    </h1>
+
+                    <div class="hero-sticker" aria-hidden="true">
+                        <span>hello!</span>
+                        <span class="sticker-star">✦</span>
+                    </div>
                 </div>
+
                 <div class="hero-photo">
-                    <div class="photo-block"></div>
-                    <img class="avatar" src="/static/img/images (2).jpg" alt="Photo of Burhan">
+                    <div class="photo-shadow" aria-hidden="true"></div>
+
+                    <div class="photo-frame">
+                        <span class="photo-label">
+                            01 / ME
+                        </span>
+
+                        <img
+                            class="avatar"
+                            src="/static/img/20240629_094434 (3).jpg"
+                            alt="Illustrated portrait"
+                        >
+
+                        <span class="photo-caption">
+                            a little visual<br>
+                            personality
+                        </span>
+                    </div>
+
+                    <span class="scribble scribble-one" aria-hidden="true">
+                        ↘
+                    </span>
+
+                    <span class="scribble scribble-two" aria-hidden="true">
+                        ✦
+                    </span>
                 </div>
+
                 <div class="hero-details">
-                    <p class="bio">I am highly interested in Machine Learning, specifically in how data-driven models can solve complex real-world problems and optimize business systems.</p>
+                    <div class="details-label">
+                        A BIT ABOUT ME
+                    </div>
+
+                    <p class="bio">
+                        I am highly interested in Machine Learning, specifically
+                        in how data-driven models can solve complex real-world
+                        problems and optimize business systems.
+                    </p>
+
                     <dl class="meta-list">
                         <div class="meta-row">
                             <dt>NPM</dt>
                             <dd>2406496372</dd>
                         </div>
+
                         <div class="meta-row">
                             <dt>Program</dt>
                             <dd>S1 Sistem Informasi</dd>
                         </div>
                     </dl>
+
+                    <div class="social-heading">
+                        <span>FIND ME</span>
+                        <span class="tiny-arrow">↘</span>
+                    </div>
+
                     <div class="social-links">
-                        <a href="https://github.com/muhrayyan43" class="social-link">GitHub</a>
-                        <a href="https://linkedin.com/muhammad-rayyan-basalamah" class="social-link">LinkedIn</a>
-                        <a href="mailto:brulums@gmail.com" class="social-link">Email</a>
+                        <a
+                            href="https://github.com/muhrayyan43"
+                            class="social-link"
+                        >
+                            GitHub <span>↗</span>
+                        </a>
+
+                        <a
+                            href="https://linkedin.com/muhammad-rayyan-basalamah"
+                            class="social-link"
+                        >
+                            LinkedIn <span>↗</span>
+                        </a>
+
+                        <a
+                            href="mailto:brulums@gmail.com"
+                            class="social-link"
+                        >
+                            Email <span>↗</span>
+                        </a>
                     </div>
                 </div>
+            </div>
+
+            <div class="container hero-footer-line" aria-hidden="true">
+                <span>SCROLL / TAKE A LOOK AROUND</span>
+                <span class="line"></span>
+                <span>✳</span>
             </div>
         </section>
     </main>
 
     <footer class="site-footer">
-        <div class="container">
-            <p>&copy; 2026 Rayyan. Fakultas Ilmu Komputer, Universitas Indonesia.</p>
+        <div class="container footer-inner">
+            <p>
+                &copy; 2026 Rayyan.
+                Fakultas Ilmu Komputer, Universitas Indonesia.
+            </p>
+
+            <span>
+                MADE WITH CURIOSITY ✦
+            </span>
         </div>
     </footer>
 </body>
 </html>
+```
