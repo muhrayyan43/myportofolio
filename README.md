@@ -33,3 +33,32 @@ misalnya data user, login, atau data yang tersimpan di database. Untuk iterasi s
 saya paling ingin menambahkan fitur yang berhubungan dengan Assignment 2, terutama
 menggunakan Django dan MVT supaya data di website bisa diambil dari database dan tidak
 semuanya ditulis secara static di HTML.
+
+### Tugas 2
+
+## AI Disclosure
+- Tools yang digunakan: ChatGPT dan Claude
+- Strategi prompting: Saya mencari sumber youtube yang membahas lebih dalam, tentang materi
+saat ini. Saya pelajarin, dan bertanya tanya apa maksud dari istilah tertentu. Setelahnya,
+saya mulai menulis kode sendiri tanpa bantuan AI, dan meminta AI mengoreksi apakah sudah benar.
+Hasil koreksiannya, lalu saya tulis ke kode saya dan saya koreksi ulang.
+- Bagian yang dibantu AI: Materi yang saya masih tidak mengerti dan pahami, lalu kalimat
+yang saya gunakan (seperti README), serta koreksi kode yang sudah saya buat
+- Data konten: Data project (nama, deskripsi, teknologi, tahun, link) berasal dari project
+nyata yang sudah saya kerjakan, bukan hasil karangan AI
+
+## Pertanyaan Reflektif
+1. Saat user membuka `/project/`, request masuk ke `urls.py` milik project, lalu diteruskan
+ke `urls.py` milik aplikasi `main`. Dari situ, URL yang cocok akan memanggil view
+`show_project`. View mengambil seluruh data `Project` dari model, memasukkannya ke dalam
+context, lalu meneruskannya ke template `project.html`. Template kemudian melakukan
+perulangan atas data tersebut dan hasil render HTML-nya dikirim kembali ke browser.
+
+2. Menurut saya lebih baik disimpan di model karena datanya jadi lebih terstruktur dan gampang
+diubah. Kalau ditulis langsung di template, nanti kalau project-nya banyak bakal susah
+maintenance karena harus edit satu-satu di kode HTML.
+
+3. `makemigrations` digunakan untuk membuat file migration berdasarkan perubahan pada model,
+sedangkan `migrate` digunakan untuk menerapkan perubahan tersebut ke database. Contohnya
+saat saya menambahkan model `Project`, saya perlu menjalankan `makemigrations` lalu
+`migrate` supaya tabel `Project` dibuat di database.
