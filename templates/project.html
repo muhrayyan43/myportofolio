@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f3efe4">
+
+    <title>Projects - {{ name }}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@10..48,500;10..48,700;10..48,800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap"
+        rel="stylesheet"
+    >
+
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body>
+    <div class="page-noise" aria-hidden="true"></div>
+
+    <header class="site-header">
+        <div class="container header-inner">
+
+            
+                href="{% url 'main:show_main' %}"
+                class="brand"
+                aria-label="{{ name }} home"
+            >
+                <span class="brand-mark">R</span>
+                <span>{{ name }}</span>
+            </a>
+
+            <div class="header-note">
+                PORTFOLIO / 2026
+            </div>
+
+            <nav aria-label="Primary navigation">
+                <a href="{% url 'main:show_main' %}">
+                    Profile <span>↗</span>
+                </a>
+
+                <a href="{% url 'main:show_main' %}#skills">
+                    Skills <span>↗</span>
+                </a>
+
+                <a href="{% url 'main:show_experience' %}">
+                    Experience <span>↗</span>
+                </a>
+
+                <a href="{% url 'main:show_main' %}#interests">
+                    Interests <span>↗</span>
+                </a>
+
+                <a href="{% url 'main:show_project' %}">
+                    Projects <span>↗</span>
+                </a>
+            </nav>
+
+        </div>
+    </header>
+
+    <main>
+        <section class="project-section" id="projects">
+            <div class="container">
+
+                <div class="experience-intro">
+                    <div>
+                        <p class="section-kicker">
+                            Yang pernah saya bangun
+                        </p>
+
+                        <h1>
+                            Projects<span class="experience-star">✦</span>
+                        </h1>
+
+                        <p class="experience-subtitle">
+                            Beberapa hal nyata yang<br>
+                            sudah saya kerjakan.
+                        </p>
+                    </div>
+
+                    <div class="experience-count">
+                        <span class="count-number">
+                            {{ project_list|length|stringformat:"02d" }}
+                        </span>
+
+                        <span class="count-label">
+                            PROJECTS
+                        </span>
+                    </div>
+                </div>
+
+                <div class="project-grid">
+
+                    {% for project in project_list %}
+
+                        <article class="project-card">
+
+                            <div class="project-card-top">
+                                <span class="experience-number">
+                                    {{ forloop.counter|stringformat:"02d" }}
+                                </span>
+
+                                <span class="project-year">
+                                    {{ project.year }}
+                                </span>
+                            </div>
+
+                            <h2 class="project-title">
+                                {{ project.title }}
+                            </h2>
+
+                            <p class="project-description">
+                                {{ project.description }}
+                            </p>
+
+                            <p class="project-tech">
+                                {{ project.tech_stack }}
+                            </p>
+
+                            {% if project.url %}
+                                
+                                    href="{{ project.url }}"
+                                    class="project-link"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    Visit <span>↗</span>
+                                </a>
+                            {% endif %}
+
+                        </article>
+
+                    {% empty %}
+
+                        <div class="empty-state project-empty-state">
+                            <span class="experience-doodle">✦</span>
+                            <h2>Belum ada project</h2>
+                            <p>
+                                Project yang sudah dikerjakan akan muncul
+                                di sini.
+                            </p>
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container footer-inner">
+
+            <p>
+                &copy; 2026 {{ name }}.
+                Fakultas Ilmu Komputer, Universitas Indonesia.
+            </p>
+
+            <span>
+                MADE WITH CURIOSITY ✦
+            </span>
+
+        </div>
+    </footer>
+
+</body>
+</html>
