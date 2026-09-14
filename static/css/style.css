@@ -1093,3 +1093,52 @@ body::after {
 .level-familiar {
     background: var(--paper-deep);
 }
+
+
+.interests-section {
+    padding: 4rem 0;
+    border-top: 1px solid var(--ink);
+}
+
+.interests-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+.interest-card {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    flex: 1 1 260px;
+    padding: 1.5rem;
+    background-color: var(--paper-deep);
+    border: var(--border);
+    transition:
+        transform .2s ease,
+        background-color .2s ease;
+}
+
+.interest-card:hover {
+    transform: rotate(-1deg);
+    background-color: var(--white);
+}
+
+.interest-icon {
+    color: var(--orange);
+    font-size: 20px;
+}
+
+.interest-name {
+    margin: 0;
+    font-family: var(--display);
+    font-size: clamp(20px, 2.5vw, 26px);
+    letter-spacing: -.03em;
+}
+
+.interest-desc {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.6;
+}
