@@ -1,5 +1,7 @@
 from django.contrib import messages
 from django.shortcuts import render, redirect
+from django.core import serializers
+from django.http import HttpResponse
 
 from main.models import Experience, Project
 from main.forms import ProjectForm
@@ -52,3 +54,24 @@ def create_project(request):
     }
 
     return render(request, "project_form.html", context)
+
+def get_project_json(request):
+    title_query = request.GET.get("title", "").strip()
+    projects = Project.objects.all()
+
+    if title_query:
+        projects = projects.filter(title__icontains=title_query)
+
+    projects_json = serializers.serialize("json", projects)
+    return HttpResponse(projects_json, content_type="application/json")
+
+
+def get_project_xml(request):
+    title_query = request.GET.get("title", "").strip()
+    projects = Project.objects.all()
+
+    if title_query:
+        projects = projects.filter(title__icontains=title_query)
+
+    projects_xml = serializers.serialize("xml", projects)
+    return HttpResponse(projects_xml, content_type="application/xml")
