@@ -245,7 +245,7 @@ body::after {
     margin: 0;
 
     font-family: var(--display);
-    font-size: clamp(72px, 8.8vw, 132px);
+    font-size: clamp(48px, 6vw, 92px);
     font-weight: 800;
 
     line-height: .76;
@@ -271,6 +271,7 @@ body::after {
 
 .name-main {
     display: block;
+    margin-bottom: .18em;
     font-size: 1em;
 }
 
@@ -283,7 +284,7 @@ body::after {
     line-height: .9;
     letter-spacing: -.06em;
 
-    transform: rotate(-2deg);
+    transform: rotate(-4deg);
 }
 
 .asterisk {

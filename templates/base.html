@@ -1,0 +1,80 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f3efe4">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@10..48,500;10..48,700;10..48,800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap"
+        rel="stylesheet"
+    >
+
+    <link rel="stylesheet" href="/static/css/style.css">
+
+    {% block meta %}{% endblock meta %}
+</head>
+
+<body>
+    <div class="page-noise" aria-hidden="true"></div>
+
+    <header class="site-header">
+        <div class="container header-inner">
+
+            
+            <a href="{% url 'main:show_main' %}" class="brand" aria-label="{{ name }} home">
+                <span class="brand-mark">R</span>
+                <span>{{ name }}</span>
+            </a>
+
+            <div class="header-note">
+                PORTFOLIO / 2026
+            </div>
+
+            <nav aria-label="Primary navigation">
+                <a href="{% url 'main:show_main' %}">
+                    Profile <span>↗</span>
+                </a>
+
+                <a href="{% url 'main:show_main' %}#skills">
+                    Skills <span>↗</span>
+                </a>
+
+                <a href="{% url 'main:show_experience' %}">
+                    Experience <span>↗</span>
+                </a>
+
+                <a href="{% url 'main:show_main' %}#interests">
+                    Interests <span>↗</span>
+                </a>
+
+                <a href="{% url 'main:show_project' %}">
+                    Projects <span>↗</span>
+                </a>
+            </nav>
+
+        </div>
+    </header>
+
+    {% block content %}{% endblock content %}
+
+    <footer class="site-footer">
+        <div class="container footer-inner">
+
+            <p>
+                &copy; 2026 {{ name }}.
+                Fakultas Ilmu Komputer, Universitas Indonesia.
+            </p>
+
+            <span>
+                MADE WITH CURIOSITY ✦
+            </span>
+
+        </div>
+    </footer>
+</body>
+</html>

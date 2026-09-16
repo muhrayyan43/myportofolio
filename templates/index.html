@@ -1,304 +1,217 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#f3efe4">
-    <title>{{ name }} - Portfolio</title>
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+{% extends "base.html" %}
 
-    <link
-        href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@10..48,500;10..48,700;10..48,800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap"
-        rel="stylesheet"
-    >
+{% block meta %}
+<title>{{ name }} - Portfolio</title>
+{% endblock meta %}
 
-    <link rel="stylesheet" href="/static/css/style.css">
-</head>
+{% block content %}
+<main>
+    <section class="hero" id="profile">
+        <div class="container hero-grid">
 
-<body>
-    <div class="page-noise" aria-hidden="true"></div>
+            <div class="hero-identity">
+                <div class="eyebrow">
+                    <span class="dot"></span>
+                    Information Systems · Universitas Indonesia
+                </div>
 
-    <header class="site-header">
-        <div class="container header-inner">
-            <a
-                href="{% url 'main:show_main' %}"
-                class="brand"
-                aria-label="{{ name }} home">
-                <span class="brand-mark">R</span>
-                <span>{{ name }}</span>
-            </a>
+                <p class="identity-intro">
+                    student / builder / curious mind
+                </p>
 
-            <div class="header-note">
-                PORTFOLIO / 2026
+                <h1 class="hero-name">
+                    <span class="name-first">Muhammad</span>
+                    <span class="name-main">
+                        Rayyan<span class="asterisk">*</span>
+                    </span>
+                    <span class="name-last">Basalamah</span>
+                </h1>
+
+                <div class="hero-sticker" aria-hidden="true">
+                    <span>hello!</span>
+                    <span class="sticker-star">✦</span>
+                </div>
             </div>
 
-            <nav aria-label="Primary navigation">
-                <a href="{% url 'main:show_main' %}">
-                    Profile <span>↗</span>
-                </a>
+            <div class="hero-photo">
+                <div class="photo-shadow" aria-hidden="true"></div>
 
-                <a href="{% url 'main:show_main' %}#skills">
-                    Skills <span>↗</span>
-                </a>
-
-                <a href="{% url 'main:show_experience' %}">
-                    Experience <span>↗</span>
-                </a>
-                
-                <a href="{% url 'main:show_main' %}#interests">
-                    Interests <span>↗</span>
-                </a>
-
-                <a href="{% url 'main:show_project' %}">
-                    Projects <span>↗</span>
-                </a>
-            </nav>
-
-        </div>
-    </header>
-
-    <main>
-        <section class="hero" id="profile">
-            <div class="container hero-grid">
-
-                <div class="hero-identity">
-                    <div class="eyebrow">
-                        <span class="dot"></span>
-                        Information Systems · Universitas Indonesia
-                    </div>
-
-                    <p class="identity-intro">
-                        student / builder / curious mind
-                    </p>
-
-                    <h1 class="hero-name">
-                        <span class="name-first">Muhammad</span>
-                        <span class="name-main">
-                            Rayyan<span class="asterisk">*</span>
-                        </span>
-                        <span class="name-last">Basalamah</span>
-                    </h1>
-
-                    <div class="hero-sticker" aria-hidden="true">
-                        <span>hello!</span>
-                        <span class="sticker-star">✦</span>
-                    </div>
-                </div>
-
-                <div class="hero-photo">
-                    <div class="photo-shadow" aria-hidden="true"></div>
-
-                    <div class="photo-frame">
-                        <span class="photo-label">
-                            01 / ME
-                        </span>
-
-                        <img
-                            class="avatar"
-                            src="/static/img/20240629_094434 (3).jpg"
-                            alt="Illustrated portrait"
-                        >
-
-                        <span class="photo-caption">
-                            a little visual<br>
-                            personality
-                        </span>
-                    </div>
-
-                    <span class="scribble scribble-one" aria-hidden="true">
-                        ↘
+                <div class="photo-frame">
+                    <span class="photo-label">
+                        01 / ME
                     </span>
 
-                    <span class="scribble scribble-two" aria-hidden="true">
-                        ✦
+                    <img
+                        class="avatar"
+                        src="/static/img/20240629_094434 (3).jpg"
+                        alt="Illustrated portrait"
+                    >
+
+                    <span class="photo-caption">
+                        a little visual<br>
+                        personality
                     </span>
                 </div>
 
-                <div class="hero-details">
-                    <div class="details-label">
-                        A BIT ABOUT ME
+                <span class="scribble scribble-one" aria-hidden="true">
+                    ↘
+                </span>
+
+                <span class="scribble scribble-two" aria-hidden="true">
+                    ✦
+                </span>
+            </div>
+
+            <div class="hero-details">
+                <div class="details-label">
+                    A BIT ABOUT ME
+                </div>
+
+                <p class="bio">
+                    {{ bio }}
+                </p>
+
+                <dl class="meta-list">
+                    <div class="meta-row">
+                        <dt>NPM</dt>
+                        <dd>{{ npm }}</dd>
                     </div>
 
-                    <p class="bio">
-                        {{ bio }}
-                    </p>
-
-                    <dl class="meta-list">
-                        <div class="meta-row">
-                            <dt>NPM</dt>
-                            <dd>{{ npm }}</dd>
-                        </div>
-
-                        <div class="meta-row">
-                            <dt>Program</dt>
-                            <dd>{{ study_program }}</dd>
-                        </div>
-                    </dl>
-
-                    <div class="social-heading">
-                        <span>FIND ME</span>
-                        <span class="tiny-arrow">↘</span>
+                    <div class="meta-row">
+                        <dt>Program</dt>
+                        <dd>{{ study_program }}</dd>
                     </div>
+                </dl>
+
+                <div class="social-heading">
+                    <span>FIND ME</span>
+                    <span class="tiny-arrow">↘</span>
+                </div>
 
                     <div class="social-links">
-                        <a
-                            href="https://github.com/muhrayyan43"
-                            class="social-link"
-                        >
+                        <a href="https://github.com/muhrayyan43" class="social-link">
                             GitHub <span>↗</span>
                         </a>
 
-                        <a
-                            href="https://linkedin.com/muhammad-rayyan-basalamah"
-                            class="social-link"
-                        >
+                        <a href="https://linkedin.com/muhammad-rayyan-basalamah" class="social-link">
                             LinkedIn <span>↗</span>
                         </a>
 
-                        <a
-                            href="mailto:brulums@gmail.com"
-                            class="social-link"
-                        >
+                        <a href="mailto:brulums@gmail.com" class="social-link">
                             Email <span>↗</span>
                         </a>
                     </div>
-                </div>
             </div>
-
-            <div class="container hero-footer-line" aria-hidden="true">
-                <span>SCROLL / TAKE A LOOK AROUND</span>
-                <span class="line"></span>
-                <span>✳</span>
-            </div>
-        </section>
-
-        <section class="skills-section" id="skills">
-            <div class="container">
-
-                <div class="skills-intro">
-                    <div>
-                        <p class="section-kicker">
-                            Yang saya kuasai
-                        </p>
-
-                        <h1>
-                            Skills<span class="experience-star">✦</span>
-                        </h1>
-
-                        <p class="experience-subtitle">
-                            Bahasa dan konsep yang saya pakai<br>
-                            untuk membangun sesuatu.
-                        </p>
-                    </div>
-                </div>
-
-                <div class="skills-grid">
-
-                    <article class="skill-card">
-                        <span class="skill-category">Programming Language</span>
-                        <h2 class="skill-name">Python</h2>
-                        <span class="skill-level level-proficient">Proficient</span>
-                    </article>
-
-                    <article class="skill-card">
-                        <span class="skill-category">Programming Language</span>
-                        <h2 class="skill-name">Java</h2>
-                        <span class="skill-level level-proficient">Proficient</span>
-                    </article>
-
-                    <article class="skill-card">
-                        <span class="skill-category">Programming Language</span>
-                        <h2 class="skill-name">PHP</h2>
-                        <span class="skill-level level-familiar">Familiar</span>
-                    </article>
-
-                    <article class="skill-card">
-                        <span class="skill-category">Programming Language</span>
-                        <h2 class="skill-name">JavaScript</h2>
-                        <span class="skill-level level-familiar">Familiar</span>
-                    </article>
-
-                    <article class="skill-card">
-                        <span class="skill-category">Concept</span>
-                        <h2 class="skill-name">Pajak</h2>
-                        <span class="skill-level level-familiar">Familiar</span>
-                    </article>
-
-                </div>
-            </div>
-        </section>
-                </div>
-            </div>
-        </section>
-
-        <section class="interests-section" id="interests">
-            <div class="container">
-
-                <div class="skills-intro">
-                    <div>
-                        <p class="section-kicker">
-                            Di luar layar kode
-                        </p>
-
-                        <h1>
-                            Interests<span class="experience-star">✦</span>
-                        </h1>
-
-                        <p class="experience-subtitle">
-                            Hal-hal yang bikin saya penasaran<br>
-                            dan senang di luar kuliah.
-                        </p>
-                    </div>
-                </div>
-
-                <div class="interests-list">
-
-                    <article class="interest-card">
-                        <span class="interest-icon" aria-hidden="true">✦</span>
-                        <h2 class="interest-name">Machine Learning</h2>
-                        <p class="interest-desc">
-                            Tertarik dengan NLP, Computer Vision, Data Mining,
-                            dan berbagai bidang AI lainnya.
-                        </p>
-                    </article>
-
-                    <article class="interest-card">
-                        <span class="interest-icon" aria-hidden="true">✦</span>
-                        <h2 class="interest-name">UFC</h2>
-                        <p class="interest-desc">
-                            Suka menonton pertandingan UFC dan mengikuti
-                            perkembangan para fighter.
-                        </p>
-                    </article>
-
-                    <article class="interest-card">
-                        <span class="interest-icon" aria-hidden="true">✦</span>
-                        <h2 class="interest-name">Traveling</h2>
-                        <p class="interest-desc">
-                            Suka bepergian dan mengeksplorasi berbagai negara,
-                            seperti Singapura, Malaysia, Thailand, dan Jepang.
-                        </p>
-                    </article>
-
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <footer class="site-footer">
-        <div class="container footer-inner">
-            <p>
-                &copy; 2026 {{ name }}.
-                Fakultas Ilmu Komputer, Universitas Indonesia.
-            </p>
-
-            <span>
-                MADE WITH CURIOSITY ✦
-            </span>
         </div>
-    </footer>
-</body>
-</html>
-```
+    </section>
+
+    <section class="skills-section" id="skills">
+        <div class="container">
+
+            <div class="skills-intro">
+                <div>
+                    <p class="section-kicker">
+                        Yang saya kuasai
+                    </p>
+
+                    <h1>
+                        Skills<span class="experience-star">✦</span>
+                    </h1>
+
+                    <p class="experience-subtitle">
+                        Bahasa dan konsep yang saya pakai<br>
+                        untuk membangun sesuatu.
+                    </p>
+                </div>
+            </div>
+
+            <div class="skills-grid">
+
+                <article class="skill-card">
+                    <span class="skill-category">Programming Language</span>
+                    <h2 class="skill-name">Python</h2>
+                    <span class="skill-level level-proficient">Proficient</span>
+                </article>
+
+                <article class="skill-card">
+                    <span class="skill-category">Programming Language</span>
+                    <h2 class="skill-name">Java</h2>
+                    <span class="skill-level level-proficient">Proficient</span>
+                </article>
+
+                <article class="skill-card">
+                    <span class="skill-category">Programming Language</span>
+                    <h2 class="skill-name">PHP</h2>
+                    <span class="skill-level level-familiar">Familiar</span>
+                </article>
+
+                <article class="skill-card">
+                    <span class="skill-category">Programming Language</span>
+                    <h2 class="skill-name">JavaScript</h2>
+                    <span class="skill-level level-familiar">Familiar</span>
+                </article>
+
+                <article class="skill-card">
+                    <span class="skill-category">Concept</span>
+                    <h2 class="skill-name">Pajak</h2>
+                    <span class="skill-level level-familiar">Familiar</span>
+                </article>
+
+            </div>
+        </div>
+    </section>
+
+    <section class="interests-section" id="interests">
+        <div class="container">
+
+            <div class="skills-intro">
+                <div>
+                    <p class="section-kicker">
+                        Di luar layar kode
+                    </p>
+
+                    <h1>
+                        Interests<span class="experience-star">✦</span>
+                    </h1>
+
+                    <p class="experience-subtitle">
+                        Hal-hal yang bikin saya penasaran<br>
+                        dan senang di luar kuliah.
+                    </p>
+                </div>
+            </div>
+
+            <div class="interests-list">
+
+                <article class="interest-card">
+                    <span class="interest-icon" aria-hidden="true">✦</span>
+                    <h2 class="interest-name">Machine Learning</h2>
+                    <p class="interest-desc">
+                        Tertarik dengan NLP, Computer Vision, Data Mining,
+                        dan berbagai bidang AI lainnya.
+                    </p>
+                </article>
+
+                <article class="interest-card">
+                    <span class="interest-icon" aria-hidden="true">✦</span>
+                    <h2 class="interest-name">UFC</h2>
+                    <p class="interest-desc">
+                        Suka menonton pertandingan UFC dan mengikuti
+                        perkembangan para fighter.
+                    </p>
+                </article>
+
+                <article class="interest-card">
+                    <span class="interest-icon" aria-hidden="true">✦</span>
+                    <h2 class="interest-name">Traveling</h2>
+                    <p class="interest-desc">
+                        Suka bepergian dan mengeksplorasi berbagai negara,
+                        seperti Singapura, Malaysia, Thailand, dan Jepang.
+                    </p>
+                </article>
+
+            </div>
+        </div>
+    </section>
+</main>
+{% endblock content %}
