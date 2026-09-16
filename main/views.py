@@ -1,5 +1,5 @@
 from django.contrib import messages
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.core import serializers
 from django.http import HttpResponse
 
@@ -75,3 +75,13 @@ def get_project_xml(request):
 
     projects_xml = serializers.serialize("xml", projects)
     return HttpResponse(projects_xml, content_type="application/xml")
+
+def delete_project(request, project_id):
+    project = get_object_or_404(Project, pk=project_id)
+
+    if request.method == "POST":
+        project.delete()
+        messages.success(request, "Proyek berhasil dihapus!")
+        return redirect("main:show_project")
+
+    return redirect("main:show_project")
