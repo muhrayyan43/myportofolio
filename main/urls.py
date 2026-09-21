@@ -12,6 +12,7 @@ from main.views import (
     # project
     show_project,
     create_project,
+    update_project,
     delete_project,
     get_project_json,
     get_project_xml,
@@ -43,6 +44,11 @@ urlpatterns = [
     # Project
     path("project/", show_project, name="show_project"),
     path("project/create/", create_project, name="create_project"),
+    path(
+        "project/<int:project_id>/edit/",
+        update_project,
+        name="update_project",
+    ),
     path(
         "project/<int:project_id>/delete/",
         delete_project,

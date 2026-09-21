@@ -56,8 +56,7 @@ def create_experience(request):
 def update_experience(request, experience_id):
     """
     Update pakai instance existing → form.save() akan UPDATE, bukan INSERT.
-    Ini menggabungkan pengambilan data by id + penyimpanan form
-    seperti hint di soal.
+    Menggabungkan pengambilan data by id + penyimpanan form seperti hint di soal.
     """
     experience = get_object_or_404(Experience, pk=experience_id)
     form = ExperienceForm(request.POST or None, instance=experience)
@@ -103,7 +102,7 @@ def get_experience_xml(request):
 
 
 # ------------------------------------------------------------------
-# Project: list + CRUD + JSON / XML  (update view menyusul di commit #5)
+# Project: list + CRUD + JSON / XML
 # ------------------------------------------------------------------
 def show_project(request):
     context = {
@@ -124,6 +123,26 @@ def create_project(request):
     context = {
         "name": AUTHOR_NAME,
         "form": form,
+        "form_title": "Tambah Proyek",
+        "submit_label": "Tambah Proyek",
+    }
+    return render(request, "project_form.html", context)
+
+
+def update_project(request, project_id):
+    project = get_object_or_404(Project, pk=project_id)
+    form = ProjectForm(request.POST or None, instance=project)
+
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Proyek berhasil diperbarui!")
+        return redirect("main:show_project")
+
+    context = {
+        "name": AUTHOR_NAME,
+        "form": form,
+        "form_title": f"Edit Proyek — {project.title}",
+        "submit_label": "Simpan Perubahan",
     }
     return render(request, "project_form.html", context)
 

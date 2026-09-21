@@ -11,13 +11,9 @@
 
             <div class="experience-intro">
                 <div>
-                    <p class="section-kicker">
-                        Yang pernah saya bangun
-                    </p>
+                    <p class="section-kicker">Yang pernah saya bangun</p>
 
-                    <h1>
-                        Projects<span class="experience-star">✦</span>
-                    </h1>
+                    <h1>Projects<span class="experience-star">✦</span></h1>
 
                     <p class="experience-subtitle">
                         Beberapa hal nyata yang<br>
@@ -34,9 +30,7 @@
                         {{ project_list|length|stringformat:"02d" }}
                     </span>
 
-                    <span class="count-label">
-                        PROJECTS
-                    </span>
+                    <span class="count-label">PROJECTS</span>
                 </div>
             </div>
 
@@ -51,28 +45,32 @@
                                 {{ forloop.counter|stringformat:"02d" }}
                             </span>
 
-                            <span class="project-year">
-                                {{ project.year }}
-                            </span>
+                            <span class="project-year">{{ project.year }}</span>
                         </div>
 
-                        <h2 class="project-title">
-                            {{ project.title }}
-                        </h2>
+                        <h2 class="project-title">{{ project.title }}</h2>
 
-                        <p class="project-description">
-                            {{ project.description }}
-                        </p>
+                        <p class="project-description">{{ project.description }}</p>
 
-                        <p class="project-tech">
-                            {{ project.tech_stack }}
-                        </p>
+                        <p class="project-tech">{{ project.tech_stack }}</p>
 
-                        {% if project.url %}
-                            <a href="{{ project.url }}" class="project-link" target="_blank" rel="noopener noreferrer">
-                                Visit <span>↗</span>
+                        <div class="card-actions">
+                            {% if project.url %}
+                                <a href="{{ project.url }}"
+                                   class="project-link"
+                                   target="_blank"
+                                   rel="noopener noreferrer">
+                                    Visit <span>↗</span>
+                                </a>
+                            {% endif %}
+
+                            <a href="{% url 'main:update_project' project.id %}"
+                               class="button button-small">
+                                Edit
                             </a>
-                        {% endif %}
+
+                            {% include "components/project_delete_modal.html" %}
+                        </div>
 
                     </article>
 
