@@ -1423,3 +1423,76 @@ body::after {
     gap: .75rem;
     margin-top: 1.5rem;
 }
+
+/* ============================================================
+   Additions for Experience CRUD + shared UI (Assignment 3)
+   ============================================================ */
+
+/* Action buttons row on cards */
+.card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    align-items: center;
+}
+
+.button-small {
+    padding: 0.35rem 0.85rem;
+    font-size: 0.8rem;
+}
+
+.button-danger {
+    background: #b3261e;
+    color: #fff;
+    border-color: #b3261e;
+}
+
+.button-danger:hover {
+    background: #8f1d17;
+    border-color: #8f1d17;
+}
+
+.button-secondary {
+    background: transparent;
+    border: 1px solid currentColor;
+}
+
+/* Flash messages under header */
+.flash-messages {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.flash {
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    border: 1px solid transparent;
+}
+
+.flash-success {
+    background: #e6f4ea;
+    border-color: #a5d6a7;
+    color: #1b5e20;
+}
+
+.flash-error,
+.flash-warning {
+    background: #fdecea;
+    border-color: #f5c2c0;
+    color: #b3261e;
+}
+
+/* Native form controls (date + select) styled to match textual inputs */
+.project-form input[type="date"],
+.project-form select {
+    font: inherit;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d6cfbe;
+    border-radius: 6px;
+    background: #fff;
+    width: 100%;
+}

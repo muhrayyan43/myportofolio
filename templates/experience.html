@@ -11,19 +11,19 @@
 
             <div class="experience-intro">
                 <div>
-                    <p class="section-kicker">
-                        Perjalanan saya sejauh ini
-                    </p>
+                    <p class="section-kicker">Perjalanan saya sejauh ini</p>
 
-                    <h1>
-                        Experience<span class="experience-star">✦</span>
-                    </h1>
+                    <h1>Experience<span class="experience-star">✦</span></h1>
 
                     <p class="experience-subtitle">
                         Some roles were planned.<br>
                         Some just happened.<br>
                         All of them taught me something.
                     </p>
+
+                    <a href="{% url 'main:create_experience' %}" class="button project-add-button">
+                        + Tambah Experience
+                    </a>
                 </div>
 
                 <div class="experience-count">
@@ -31,13 +31,9 @@
                         {{ experience_list|length|stringformat:"02d" }}
                     </span>
 
-                    <span class="count-label">
-                        CHAPTERS
-                    </span>
+                    <span class="count-label">CHAPTERS</span>
 
-                    <span class="count-period">
-                        2020 → NOW
-                    </span>
+                    <span class="count-period">2020 → NOW</span>
                 </div>
             </div>
 
@@ -59,27 +55,19 @@
 
                         <div class="experience-card-body">
 
-                            <span class="experience-arrow">
-                                ↗
-                            </span>
+                            <span class="experience-arrow">↗</span>
 
-                            <h2>
-                                {{ experience.title }}
-                            </h2>
+                            <h2>{{ experience.title }}</h2>
 
                             <div class="experience-period">
-                                <span>
-                                    {{ experience.started_at|date:"Y" }}
-                                </span>
+                                <span>{{ experience.started_at|date:"M Y" }}</span>
 
-                                <span class="period-arrow">
-                                    →
-                                </span>
+                                <span class="period-arrow">→</span>
 
                                 {% if experience.is_ongoing %}
                                     <span>NOW</span>
                                 {% else %}
-                                    <span>{{ experience.ended_at|date:"Y" }}</span>
+                                    <span>{{ experience.ended_at|date:"M Y" }}</span>
                                 {% endif %}
                             </div>
 
@@ -92,36 +80,26 @@
                         <div class="experience-card-bottom">
 
                             {% if experience.is_ongoing %}
-
                                 <span class="experience-status status-now">
                                     ● NOW
                                     <span class="status-accessibility">
                                         Sedang berlangsung
                                     </span>
                                 </span>
-
                             {% else %}
-
                                 <span class="experience-status status-completed">
                                     ✓ COMPLETED
-                                    <span class="status-accessibility">
-                                        Selesai
-                                    </span>
+                                    <span class="status-accessibility">Selesai</span>
                                 </span>
-
                             {% endif %}
 
-                            <span class="experience-doodle">
-                                {% if forloop.counter == 1 %}
-                                    +
-                                {% elif forloop.counter == 2 %}
-                                    ✦
-                                {% elif forloop.counter == 3 %}
-                                    *
-                                {% else %}
-                                    ↗
-                                {% endif %}
-                            </span>
+                            <div class="card-actions">
+                                <a href="{% url 'main:update_experience' experience.id %}"
+                                   class="button button-small">
+                                    Edit
+                                </a>
+                                {% include "components/experience_delete_modal.html" %}
+                            </div>
 
                         </div>
 
@@ -129,9 +107,14 @@
 
                 {% empty %}
 
-                    <p class="empty-state">
-                        Belum ada pengalaman yang ditambahkan.
-                    </p>
+                    <div class="empty-state project-empty-state">
+                        <span class="experience-doodle">✦</span>
+                        <h2>Belum ada experience</h2>
+                        <p>
+                            Klik <strong>+ Tambah Experience</strong>
+                            untuk menambah pengalaman pertamamu.
+                        </p>
+                    </div>
 
                 {% endfor %}
 

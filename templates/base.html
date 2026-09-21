@@ -25,7 +25,6 @@
     <header class="site-header">
         <div class="container header-inner">
 
-            
             <a href="{% url 'main:show_main' %}" class="brand" aria-label="{{ name }} home">
                 <span class="brand-mark">R</span>
                 <span>{{ name }}</span>
@@ -59,6 +58,14 @@
 
         </div>
     </header>
+
+    {% if messages %}
+        <div class="container flash-messages">
+            {% for message in messages %}
+                <div class="flash flash-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
 
     {% block content %}{% endblock content %}
 
