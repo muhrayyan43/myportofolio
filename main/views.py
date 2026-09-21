@@ -1,3 +1,5 @@
+import datetime
+
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
@@ -36,7 +38,12 @@ def login_user(request):
     if request.method == "POST" and form.is_valid():
         user = form.get_user()
         login(request, user)
-        return redirect("main:show_main")
+        response = redirect("main:show_main")
+        response.set_cookie(
+            "last_login",
+            datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        )
+        return response
 
     context = {
         "name": AUTHOR_NAME,
@@ -47,10 +54,15 @@ def login_user(request):
 
 def logout_user(request):
     logout(request)
-    return redirect("main:show_main")
+    response = redirect("main:show_main")
+    response.delete_cookie("last_login")
+    return response
 
 
 def show_main(request):
+    last_login = request.COOKIES.get(
+        "last_login", "Belum ada sesi login / Cookie tidak ditemukan"
+    )
     context = {
         "name": AUTHOR_NAME,
         "npm": "2406496372",
@@ -60,6 +72,7 @@ def show_main(request):
             "in how data-driven models can solve complex real-world "
             "problems and optimize business systems."
         ),
+        "last_login": last_login,
     }
     return render(request, "index.html", context)
 
