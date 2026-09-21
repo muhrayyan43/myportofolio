@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block meta %}
+<title>Register - {{ name }}</title>
+{% endblock meta %}
+
+{% block content %}
+<main>
+    <section class="project-section auth-section" id="register">
+        <div class="container auth-container">
+
+            <div class="auth-intro">
+                <p class="eyebrow">
+                    <span class="dot"></span>
+                    Join the workshop
+                </p>
+
+                <h1>
+                    Buat<br>
+                    Akun<span class="experience-star">✦</span>
+                </h1>
+
+                <p class="experience-subtitle">
+                    Daftar dulu untuk bisa memberi<br>
+                    star pada proyek yang kamu suka.
+                </p>
+            </div>
+
+            <div class="auth-form-wrapper">
+                <form method="post"
+                      action="{% url 'main:register' %}"
+                      class="project-form auth-form"
+                      novalidate>
+                    {% csrf_token %}
+
+                    {% for error in form.non_field_errors %}
+                        <p class="form-error">{{ error }}</p>
+                    {% endfor %}
+
+                    {% for field in form %}
+                        <div class="form-group">
+                            <label for="{{ field.id_for_label }}">
+                                {{ field.label }}
+                            </label>
+
+                            {{ field }}
+
+                            {% if field.help_text %}
+                                <div class="form-help">{{ field.help_text|safe }}</div>
+                            {% endif %}
+
+                            {% for error in field.errors %}
+                                <p class="form-error">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+
+                    <div class="form-actions">
+                        <button type="submit" class="button">
+                            Daftar Sekarang
+                        </button>
+                    </div>
+                </form>
+
+                <p class="auth-alt">
+                    Sudah punya akun?
+                    <a href="{% url 'main:login' %}">Login di sini <span>↗</span></a>
+                </p>
+            </div>
+
+        </div>
+    </section>
+</main>
+{% endblock content %}
