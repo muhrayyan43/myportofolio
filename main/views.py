@@ -253,7 +253,12 @@ def get_project_json(request):
     projects = Project.objects.all()
     if title_query:
         projects = projects.filter(title__icontains=title_query)
-    payload = serializers.serialize("json", projects)
+    # use_natural_foreign_keys=True renders starred_by as [["username"], ...]
+    # instead of [1, 2] so we don't leak internal DB ids through the
+    # public API and the payload stays human-readable.
+    payload = serializers.serialize(
+        "json", projects, use_natural_foreign_keys=True
+    )
     return HttpResponse(payload, content_type="application/json")
 
 
@@ -262,5 +267,7 @@ def get_project_xml(request):
     projects = Project.objects.all()
     if title_query:
         projects = projects.filter(title__icontains=title_query)
-    payload = serializers.serialize("xml", projects)
+    payload = serializers.serialize(
+        "xml", projects, use_natural_foreign_keys=True
+    )
     return HttpResponse(payload, content_type="application/xml")
