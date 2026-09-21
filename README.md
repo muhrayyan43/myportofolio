@@ -93,13 +93,11 @@ saya tidak perlu tulis satu-satu `<input>` di HTML. Validasinya juga otomatis se
 tipe field, misalnya `URLField` bakal nolak input yang bukan URL, dan `form.save()`
 bisa langsung simpan ke database dalam satu baris. Kalau bikin form HTML manual,
 semua konversi tipe, validasi, sampai penyimpanan harus diurus sendiri, dan kalau
-modelnya berubah harus edit HTML-nya juga.
-
-Untuk `{% csrf_token %}`, itu buat mencegah serangan CSRF. Jadi kalau ada website
-lain yang coba kirim request POST ke aplikasi saya diam-diam pakai session user yang
-lagi login, request-nya bakal ditolak karena token-nya tidak cocok. Django menyisipkan
-token unik per session, dan situs jahat tidak tahu isinya, jadi request palsu langsung
-ke-block dengan 403.
+modelnya berubah harus edit HTML-nya juga. Untuk `{% csrf_token %}`, itu buat mencegah serangan CSRF. 
+Jadi kalau ada website lain yang coba kirim request POST ke aplikasi saya diam-diam pakai 
+session user yang lagi login, request-nya bakal ditolak karena token-nya tidak cocok. 
+Django menyisipkan token unik per session, dan situs jahat tidak tahu isinya, jadi request 
+palsu langsung ke-block dengan 403.
 
 2. JSON lebih ringkas dan lebih gampang dibaca. Dia tidak butuh tag pembuka-penutup
 seperti XML, jadi ukuran datanya lebih kecil. Selain itu JSON juga native di JavaScript
@@ -112,9 +110,7 @@ praktis.
 `get_experience_json`. View ambil data pakai `Experience.objects.all()`, terus
 di-serialize jadi string JSON pakai `django.core.serializers.serialize`, lalu
 dibungkus dalam `HttpResponse` dengan `content_type="application/json"` dan dikirim
-balik.
-
-Serialization perlu karena objek `Experience` itu objek Python yang punya method
+balik. Serialization perlu karena objek `Experience` itu objek Python yang punya method
 dan referensi ke database, sedangkan HTTP cuma bisa kirim teks. Jadi objeknya harus
 diubah dulu jadi struktur data sederhana (dict, list, string, number) yang bisa
 ditulis sebagai JSON dan dibaca sama siapa aja — browser, aplikasi mobile, atau
