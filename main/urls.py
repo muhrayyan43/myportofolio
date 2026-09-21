@@ -2,6 +2,10 @@ from django.urls import path
 
 from main.views import (
     show_main,
+    # auth
+    register,
+    login_user,
+    logout_user,
     # experience
     show_experience,
     create_experience,
@@ -25,6 +29,11 @@ app_name = "main"
 urlpatterns = [
     path("", show_main, name="show_main"),
 
+    # Auth
+    path("register/", register, name="register"),
+    path("login/", login_user, name="login"),
+    path("logout/", logout_user, name="logout"),
+    
     # Experience
     path("experience/", show_experience, name="show_experience"),
     path("experience/create/", create_experience, name="create_experience"),
