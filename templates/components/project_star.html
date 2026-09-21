@@ -1,0 +1,28 @@
+{# Star / Unstar button for a project.                                   #}
+{# - Anonymous visitor:  form still renders; @login_required on the      #}
+{#   view redirects them to /login/ when they submit.                    #}
+{# - Logged-in user:     first click stars, click again unstars.         #}
+{# - The <button> is inside its own <form> so the click is a POST        #}
+{#   (state-changing request), automatically protected by                #}
+{#   {% csrf_token %} + Django's CsrfViewMiddleware.                     #}
+
+<form method="post"
+      action="{% url 'main:toggle_star' project.id %}"
+      class="star-form">
+    {% csrf_token %}
+
+    <button type="submit"
+            class="button button-star{% if user in project.starred_by.all %} is-starred{% endif %}"
+            title="{% if project.starred_by.all %}Dibintangi oleh {{ project.starred_by.all|join:', ' }}{% else %}Belum ada yang memberi bintang{% endif %}">
+
+        <span aria-hidden="true">★</span>
+
+        {% if user in project.starred_by.all %}
+            Unstar
+        {% else %}
+            Star
+        {% endif %}
+
+        <span class="star-count">{{ project.starred_by.count }}</span>
+    </button>
+</form>

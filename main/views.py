@@ -235,6 +235,19 @@ def delete_project(request, project_id):
     return redirect("main:show_project")
 
 
+@login_required(login_url="/login/")
+def toggle_star(request, project_id):
+    project = get_object_or_404(Project, pk=project_id)
+
+    if request.method == "POST":
+        if request.user in project.starred_by.all():
+            project.starred_by.remove(request.user)
+        else:
+            project.starred_by.add(request.user)
+
+    return redirect("main:show_project")
+
+
 def get_project_json(request):
     title_query = request.GET.get("title", "").strip()
     projects = Project.objects.all()

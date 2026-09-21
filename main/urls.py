@@ -18,6 +18,7 @@ from main.views import (
     create_project,
     update_project,
     delete_project,
+    toggle_star,
     get_project_json,
     get_project_xml,
 )
@@ -33,7 +34,7 @@ urlpatterns = [
     path("register/", register, name="register"),
     path("login/", login_user, name="login"),
     path("logout/", logout_user, name="logout"),
-    
+
     # Experience
     path("experience/", show_experience, name="show_experience"),
     path("experience/create/", create_experience, name="create_experience"),
@@ -62,6 +63,11 @@ urlpatterns = [
         "project/<int:project_id>/delete/",
         delete_project,
         name="delete_project",
+    ),
+    path(
+        "project/<int:project_id>/star/",
+        toggle_star,
+        name="toggle_star",
     ),
     path("api/project/", get_project_json, name="get_project_json"),
     path("api/project/xml/", get_project_xml, name="get_project_xml"),

@@ -66,6 +66,8 @@
                                 </a>
                             {% endif %}
 
+                            {% include "components/project_star.html" with project=project %}
+
                             {% if user.is_superuser %}
                                 <a href="{% url 'main:update_project' project.id %}"
                                    class="button button-small">
