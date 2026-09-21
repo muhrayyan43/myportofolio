@@ -21,9 +21,11 @@
                         All of them taught me something.
                     </p>
 
-                    <a href="{% url 'main:create_experience' %}" class="button project-add-button">
-                        + Tambah Experience
-                    </a>
+                    {% if user.is_superuser %}
+                        <a href="{% url 'main:create_experience' %}" class="button project-add-button">
+                            + Tambah Experience
+                        </a>
+                    {% endif %}
                 </div>
 
                 <div class="experience-count">
@@ -93,13 +95,15 @@
                                 </span>
                             {% endif %}
 
-                            <div class="card-actions">
-                                <a href="{% url 'main:update_experience' experience.id %}"
-                                   class="button button-small">
-                                    Edit
-                                </a>
-                                {% include "components/experience_delete_modal.html" %}
-                            </div>
+                            {% if user.is_superuser %}
+                                <div class="card-actions">
+                                    <a href="{% url 'main:update_experience' experience.id %}"
+                                       class="button button-small">
+                                        Edit
+                                    </a>
+                                    {% include "components/experience_delete_modal.html" %}
+                                </div>
+                            {% endif %}
 
                         </div>
 
@@ -111,8 +115,13 @@
                         <span class="experience-doodle">✦</span>
                         <h2>Belum ada experience</h2>
                         <p>
-                            Klik <strong>+ Tambah Experience</strong>
-                            untuk menambah pengalaman pertamamu.
+                            {% if user.is_superuser %}
+                                Klik <strong>+ Tambah Experience</strong>
+                                untuk menambah pengalaman pertamamu.
+                            {% else %}
+                                Pengalaman yang dibagikan pemilik portofolio
+                                akan tampil di sini.
+                            {% endif %}
                         </p>
                     </div>
 
