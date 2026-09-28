@@ -19,6 +19,7 @@ from main.views import (
     update_project,
     delete_project,
     toggle_star,
+    show_starred_projects,
     get_project_json,
     get_project_xml,
 )
@@ -69,6 +70,7 @@ urlpatterns = [
         toggle_star,
         name="toggle_star",
     ),
+    path("starred/", show_starred_projects, name="show_starred"),
     path("api/project/", get_project_json, name="get_project_json"),
     path("api/project/xml/", get_project_xml, name="get_project_xml"),
 ]

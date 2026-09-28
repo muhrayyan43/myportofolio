@@ -5,12 +5,12 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.core import serializers
-from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 
 from main.forms import ExperienceForm, ProjectForm
 from main.models import Experience, Project
+from main.permissions import require_can_edit, require_owner
 
 
 AUTHOR_NAME = "Muhammad Rayyan Basalamah"
@@ -93,8 +93,7 @@ def show_experience(request):
 
 @login_required(login_url="/login/")
 def create_experience(request):
-    if not request.user.is_superuser:
-        raise PermissionDenied
+    require_owner(request.user)
 
     form = ExperienceForm(request.POST or None)
 
@@ -114,12 +113,8 @@ def create_experience(request):
 
 @login_required(login_url="/login/")
 def update_experience(request, experience_id):
-    """
-    Update pakai instance existing → form.save() akan UPDATE, bukan INSERT.
-    Menggabungkan pengambilan data by id + penyimpanan form seperti hint di soal.
-    """
-    if not request.user.is_superuser:
-        raise PermissionDenied
+    require_can_edit(request.user)
+
 
     experience = get_object_or_404(Experience, pk=experience_id)
     form = ExperienceForm(request.POST or None, instance=experience)
@@ -140,8 +135,7 @@ def update_experience(request, experience_id):
 
 @login_required(login_url="/login/")
 def delete_experience(request, experience_id):
-    if not request.user.is_superuser:
-        raise PermissionDenied
+    require_owner(request.user)
 
     experience = get_object_or_404(Experience, pk=experience_id)
     if request.method == "POST":
@@ -181,8 +175,7 @@ def show_project(request):
 
 @login_required(login_url="/login/")
 def create_project(request):
-    if not request.user.is_superuser:
-        raise PermissionDenied
+    require_owner(request.user)
 
     form = ProjectForm(request.POST or None)
 
@@ -202,8 +195,7 @@ def create_project(request):
 
 @login_required(login_url="/login/")
 def update_project(request, project_id):
-    if not request.user.is_superuser:
-        raise PermissionDenied
+    require_can_edit(request.user)
 
     project = get_object_or_404(Project, pk=project_id)
     form = ProjectForm(request.POST or None, instance=project)
@@ -224,8 +216,7 @@ def update_project(request, project_id):
 
 @login_required(login_url="/login/")
 def delete_project(request, project_id):
-    if not request.user.is_superuser:
-        raise PermissionDenied
+    require_owner(request.user)
 
     project = get_object_or_404(Project, pk=project_id)
     if request.method == "POST":
@@ -247,6 +238,13 @@ def toggle_star(request, project_id):
 
     return redirect("main:show_project")
 
+@login_required(login_url="/login/")
+def show_starred_projects(request):
+    context = {
+        "name": AUTHOR_NAME,
+        "project_list": request.user.starred_projects.all(),
+    }
+    return render(request, "starred.html", context)
 
 def get_project_json(request):
     title_query = request.GET.get("title", "").strip()
