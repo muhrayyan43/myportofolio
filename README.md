@@ -115,3 +115,25 @@ dan referensi ke database, sedangkan HTTP cuma bisa kirim teks. Jadi objeknya ha
 diubah dulu jadi struktur data sederhana (dict, list, string, number) yang bisa
 ditulis sebagai JSON dan dibaca sama siapa aja — browser, aplikasi mobile, atau
 program lain.
+
+### Tugas 4
+
+## AI Disclosure
+- Tools yang digunakan: ChatGPT dan Claude 
+- Strategi prompting: Saya mengupload file tugas ke-4 ke ChatGPT, dan memintanya memberikan garis 
+besar langkah-langkah pengerjaan, dari awal sampai akhir. Setelahnya saya membaca satu per satu, 
+langkah-langkah yang diberikan ChatGPT, lalu menanyakan langkah yang saya masih bingung ke ChatGPT.
+ChatGPT kemudian menjelaskan bagian bagian yang saya tidak pahamin. Setelahnya, saya mulai mengerjakan
+kode-kode program saya, dan menanyakan apakah sudah benar atau tidak ke Claude. Claude akan memberikan
+kode yang lebih efisien dan lebih baik kepada saya. Setelahnya saya akan menganalisa kembali kode-kodenya
+lalu menuliskan ulang tanpa copy paste secara langsung.
+- Bagian yang dibantu AI: CSS badge peran, pengecekan otomatis lewat Django test client
+(4 peran, kode status 302/403/200), test Selenium di `test_e2e.py`, dan draft README ini.
+- Bagian yang saya kerjakan sendiri: Bagian `permissions.py` dan `context_processors.py`, penyesuaian
+guard pada `views.py`, halaman `starred.html`, membuat akun superuser, membuat Group `Editor` dan
+memasukkan user ke dalamnya lewat Django Admin, menguji alur di browser, serta memutuskan mana saran 
+AI yang dipakai dan mana yang dibuang.
+- Data konten: Data project dan Experience tetap berasal dari pekerjaan saya sendiri, bukan hasil
+karangan AI.
+- Saya sempat meminta perbaikan tampilan navbar. Claude merekomendasikan beberapa opsi yang kompleks, 
+tapi saya tidak jadi menggunakannya.
