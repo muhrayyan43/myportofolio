@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block meta %}
+<title>My Starred Projects - {{ name }}</title>
+{% endblock meta %}
+
+{% block content %}
+<main>
+    <section class="project-section" id="starred">
+        <div class="container">
+
+            <div class="experience-intro">
+                <div>
+                    <p class="section-kicker">Proyek yang kamu bintangi</p>
+
+                    <h1>Starred<span class="experience-star">✦</span></h1>
+
+                    <p class="experience-subtitle">
+                        Kumpulan proyek yang sudah<br>
+                        kamu beri bintang.
+                    </p>
+
+                    <a href="{% url 'main:show_project' %}" class="button project-add-button">
+                        ← Lihat semua proyek
+                    </a>
+                </div>
+
+                <div class="experience-count">
+                    <span class="count-number">
+                        {{ project_list|length|stringformat:"02d" }}
+                    </span>
+
+                    <span class="count-label">STARRED</span>
+                </div>
+            </div>
+
+            <div class="project-grid">
+
+                {% for project in project_list %}
+
+                    <article class="project-card">
+
+                        <div class="project-card-top">
+                            <span class="experience-number">
+                                {{ forloop.counter|stringformat:"02d" }}
+                            </span>
+
+                            <span class="project-year">{{ project.year }}</span>
+                        </div>
+
+                        <h2 class="project-title">{{ project.title }}</h2>
+
+                        <p class="project-description">{{ project.description }}</p>
+
+                        <p class="project-tech">{{ project.tech_stack }}</p>
+
+                        <div class="card-actions">
+                            {% if project.url %}
+                                <a href="{{ project.url }}"
+                                   class="project-link"
+                                   target="_blank"
+                                   rel="noopener noreferrer">
+                                    Visit <span>↗</span>
+                                </a>
+                            {% endif %}
+
+                            {% include "components/project_star.html" with project=project %}
+                        </div>
+
+                    </article>
+
+                {% empty %}
+
+                    <div class="empty-state project-empty-state">
+                        <span class="experience-doodle">✦</span>
+                        <h2>Belum ada proyek yang dibintangi</h2>
+                        <p>
+                            Buka halaman
+                            <a href="{% url 'main:show_project' %}">Projects</a>
+                            lalu tekan tombol ★ Star pada proyek yang
+                            kamu suka — proyeknya akan muncul di sini.
+                        </p>
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+        </div>
+    </section>
+</main>
+{% endblock content %}
