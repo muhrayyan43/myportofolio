@@ -20,7 +20,7 @@
                         sudah saya kerjakan.
                     </p>
 
-                    {% if user.is_superuser %}
+                    {% if can_create_or_delete %}
                         <a href="{% url 'main:create_project' %}" class="button project-add-button">
                             + Tambah Proyek
                         </a>
@@ -68,12 +68,14 @@
 
                             {% include "components/project_star.html" with project=project %}
 
-                            {% if user.is_superuser %}
+                            {% if can_edit %}
                                 <a href="{% url 'main:update_project' project.id %}"
                                    class="button button-small">
                                     Edit
                                 </a>
+                            {% endif %}
 
+                            {% if can_create_or_delete %}
                                 {% include "components/project_delete_modal.html" %}
                             {% endif %}
                         </div>

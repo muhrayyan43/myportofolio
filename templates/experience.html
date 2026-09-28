@@ -21,7 +21,7 @@
                         All of them taught me something.
                     </p>
 
-                    {% if user.is_superuser %}
+                    {% if can_create_or_delete %}
                         <a href="{% url 'main:create_experience' %}" class="button project-add-button">
                             + Tambah Experience
                         </a>
@@ -95,13 +95,15 @@
                                 </span>
                             {% endif %}
 
-                            {% if user.is_superuser %}
+                            {% if can_edit %}
                                 <div class="card-actions">
                                     <a href="{% url 'main:update_experience' experience.id %}"
                                        class="button button-small">
                                         Edit
                                     </a>
-                                    {% include "components/experience_delete_modal.html" %}
+                                    {% if can_create_or_delete %}
+                                        {% include "components/experience_delete_modal.html" %}
+                                    {% endif %}
                                 </div>
                             {% endif %}
 
@@ -115,7 +117,7 @@
                         <span class="experience-doodle">✦</span>
                         <h2>Belum ada experience</h2>
                         <p>
-                            {% if user.is_superuser %}
+                            {% if can_create_or_delete %}
                                 Klik <strong>+ Tambah Experience</strong>
                                 untuk menambah pengalaman pertamamu.
                             {% else %}
