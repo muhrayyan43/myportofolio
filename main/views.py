@@ -5,7 +5,7 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.core import serializers
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 
 from main.forms import ExperienceForm, ProjectForm
@@ -248,16 +248,33 @@ def show_starred_projects(request):
 
 def get_project_json(request):
     title_query = request.GET.get("title", "").strip()
-    projects = Project.objects.all()
+    projects = Project.objects.prefetch_related("starred_by").all()
     if title_query:
         projects = projects.filter(title__icontains=title_query)
-    # use_natural_foreign_keys=True renders starred_by as [["username"], ...]
-    # instead of [1, 2] so we don't leak internal DB ids through the
-    # public API and the payload stays human-readable.
-    payload = serializers.serialize(
-        "json", projects, use_natural_foreign_keys=True
-    )
-    return HttpResponse(payload, content_type="application/json")
+
+    is_authenticated = request.user.is_authenticated
+    data = []
+    for project in projects:
+        starred_users = list(project.starred_by.all())
+        is_starred = (
+            is_authenticated and request.user in starred_users
+        )
+        data.append({
+            "pk": str(project.id),
+            "fields": {
+                "title": project.title,
+                "description": project.description,
+                "tech_stack": project.tech_stack,
+                "year": project.year,
+                "url": project.url or "",
+                "star_count": len(starred_users),
+                "is_starred": is_starred,
+                "starred_by_names": ", ".join(
+                    u.username for u in starred_users
+                ),
+            },
+        })
+    return JsonResponse(data, safe=False)
 
 
 def get_project_xml(request):
