@@ -1734,3 +1734,58 @@ body::after {
 .button-star.is-starred .star-count {
     background: rgba(255, 255, 255, .28);
 }
+
+
+/* ============================================================
+   TOAST NOTIFICATION (Popover API + slide-in transition)
+   ============================================================ */
+.toast-component {
+    position: fixed;
+    inset: auto 2rem 2rem auto;
+    margin: 0;
+    padding: 1rem 1.5rem;
+    border-radius: 4px;
+    box-shadow: 5px 5px 0 var(--ink);
+    display: none;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.3s ease;
+    background-color: var(--paper);
+    border: var(--border);
+    color: var(--ink);
+    max-width: 360px;
+}
+
+.toast-component:popover-open {
+    display: flex;
+}
+
+.toast-hidden {
+    opacity: 0;
+    transform: translateY(150%);
+    pointer-events: none;
+}
+
+.toast-show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.toast-title {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0 0 0.15rem 0;
+    font-family: var(--display);
+    color: var(--ink);
+}
+
+.toast-message {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin: 0;
+}
+
+/* Left border marker per notification type. */
+.toast-success { border-left: 6px solid #22c55e; }
+.toast-error   { border-left: 6px solid #b42318; }
+.toast-normal  { border-left: 6px solid var(--orange); }
