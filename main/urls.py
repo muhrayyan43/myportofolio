@@ -16,6 +16,7 @@ from main.views import (
     # project
     show_project,
     create_project,
+    create_project_ajax,
     update_project,
     delete_project,
     toggle_star,
@@ -55,6 +56,7 @@ urlpatterns = [
     # Project
     path("project/", show_project, name="show_project"),
     path("project/create/", create_project, name="create_project"),
+    path("project/add-ajax/", create_project_ajax, name="create_project_ajax"),
     path(
         "project/<int:project_id>/edit/",
         update_project,
