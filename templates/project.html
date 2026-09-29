@@ -99,6 +99,15 @@
         gridContainer.classList.toggle('hide', !showGrid);
     }
 
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#39;');
+    }
+
     function buildProjectCardElement(item, index) {
         const project = item.fields;
         const projectId = item.pk;
@@ -110,13 +119,13 @@
         const numberText = String(index + 1).padStart(2, '0');
 
         const urlHtml = project.url
-            ? `<a href="${project.url}" class="project-link" target="_blank" rel="noopener noreferrer">Visit <span>↗</span></a>`
+            ? `<a href="${escapeHtml(project.url)}" class="project-link" target="_blank" rel="noopener noreferrer">Visit <span>↗</span></a>`
             : '';
 
         const isStarredClass = project.is_starred ? " is-starred" : "";
         const starText = project.is_starred ? "Unstar" : "Star";
         const starTitle = project.star_count > 0
-            ? `Dibintangi oleh ${project.starred_by_names}`
+            ? `Dibintangi oleh ${escapeHtml(project.starred_by_names)}`
             : "Belum ada yang memberi bintang";
 
         const starFormHtml = `
@@ -147,11 +156,11 @@
         articleElement.innerHTML = `
             <div class="project-card-top">
                 <span class="experience-number">${numberText}</span>
-                <span class="project-year">${project.year}</span>
+                <span class="project-year">${escapeHtml(project.year)}</span>
             </div>
-            <h2 class="project-title">${project.title}</h2>
-            <p class="project-description">${project.description}</p>
-            <p class="project-tech">${project.tech_stack}</p>
+            <h2 class="project-title">${escapeHtml(project.title)}</h2>
+            <p class="project-description">${escapeHtml(project.description)}</p>
+            <p class="project-tech">${escapeHtml(project.tech_stack)}</p>
             <div class="card-actions">
                 ${urlHtml}
                 ${starFormHtml}
