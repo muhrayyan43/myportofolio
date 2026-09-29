@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.forms import (
     ModelForm,
     TextInput,
@@ -7,6 +8,7 @@ from django.forms import (
     Select,
     DateInput,
 )
+from django.utils.html import strip_tags
 
 from main.models import Experience, Project
 
@@ -50,20 +52,22 @@ class ProjectForm(ModelForm):
             ),
         }
 
+    def clean_title(self):
+        title = strip_tags(self.cleaned_data["title"]).strip()
+        if not title:
+            raise ValidationError(
+                "Nama proyek tidak boleh hanya berisi tag HTML."
+            )
+        return title
+
+    def clean_description(self):
+        return strip_tags(self.cleaned_data["description"]).strip()
+
+    def clean_tech_stack(self):
+        return strip_tags(self.cleaned_data["tech_stack"]).strip()
+
 
 class ExperienceForm(ModelForm):
-    """
-    ModelForm untuk Experience.
-
-    Punya 6 field yang bisa diisi user dengan tipe data bervariasi
-    (Char, Text, Choices, URL, Date, Date) — memenuhi syarat minimal
-    3 field selain id & timestamp.
-
-    Field yang sengaja TIDAK dimasukkan:
-      - id (UUID, auto)
-      - created_at / updated_at (auto-managed timestamps)
-    """
-
     class Meta:
         model = Experience
         fields = [
