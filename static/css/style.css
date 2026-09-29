@@ -1789,3 +1789,43 @@ body::after {
 .toast-success { border-left: 6px solid #22c55e; }
 .toast-error   { border-left: 6px solid #b42318; }
 .toast-normal  { border-left: 6px solid var(--orange); }
+
+
+/* ============================================================
+   AJAX PAGE STATES + SEARCH FORM
+   ============================================================ */
+
+/* Utility: hide entirely without collapsing surrounding flex/grid gap. */
+.hide {
+    display: none !important;
+}
+
+/* Search bar at the top of the projects list. */
+.project-search {
+    display: flex;
+    gap: 0.75rem;
+    margin: 1.5rem 0 2rem 0;
+    align-items: stretch;
+}
+
+.project-search__input {
+    flex: 1;
+    padding: 0.7rem 1rem;
+    border: var(--border);
+    background: var(--white);
+    font-family: var(--body);
+    font-size: 0.95rem;
+    color: var(--ink);
+    box-shadow: 3px 3px 0 var(--ink);
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.project-search__input:focus {
+    outline: none;
+    transform: translate(-2px, -2px);
+    box-shadow: 5px 5px 0 var(--ink);
+}
+
+.project-search .button {
+    flex-shrink: 0;
+}

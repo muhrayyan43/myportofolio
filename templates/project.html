@@ -28,76 +28,174 @@
                 </div>
 
                 <div class="experience-count">
-                    <span class="count-number">
-                        {{ project_list|length|stringformat:"02d" }}
-                    </span>
+                    <span class="count-number" id="project-count">00</span>
 
                     <span class="count-label">PROJECTS</span>
                 </div>
             </div>
 
-            <div class="project-grid">
+            <form id="project-search-form" class="project-search">
+                <input type="search"
+                       id="search-input"
+                       name="title"
+                       value="{{ title_query }}"
+                       placeholder="Cari berdasarkan nama proyek"
+                       class="project-search__input"
+                       aria-label="Cari berdasarkan nama proyek">
+                <button type="submit" class="button">Cari</button>
+            </form>
 
-                {% for project in project_list %}
-
-                    <article class="project-card">
-
-                        <div class="project-card-top">
-                            <span class="experience-number">
-                                {{ forloop.counter|stringformat:"02d" }}
-                            </span>
-
-                            <span class="project-year">{{ project.year }}</span>
-                        </div>
-
-                        <h2 class="project-title">{{ project.title }}</h2>
-
-                        <p class="project-description">{{ project.description }}</p>
-
-                        <p class="project-tech">{{ project.tech_stack }}</p>
-
-                        <div class="card-actions">
-                            {% if project.url %}
-                                <a href="{{ project.url }}"
-                                   class="project-link"
-                                   target="_blank"
-                                   rel="noopener noreferrer">
-                                    Visit <span>↗</span>
-                                </a>
-                            {% endif %}
-
-                            {% include "components/project_star.html" with project=project %}
-
-                            {% if can_edit %}
-                                <a href="{% url 'main:update_project' project.id %}"
-                                   class="button button-small">
-                                    Edit
-                                </a>
-                            {% endif %}
-
-                            {% if can_create_or_delete %}
-                                {% include "components/project_delete_modal.html" %}
-                            {% endif %}
-                        </div>
-
-                    </article>
-
-                {% empty %}
-
-                    <div class="empty-state project-empty-state">
-                        <span class="experience-doodle">✦</span>
-                        <h2>Belum ada project</h2>
-                        <p>
-                            Project yang sudah dikerjakan akan muncul
-                            di sini.
-                        </p>
-                    </div>
-
-                {% endfor %}
-
+            <!-- Loading state -->
+            <div id="loading" class="empty-state hide">
+                <p>Memuat projects...</p>
             </div>
+
+            <!-- Error state -->
+            <div id="error" class="empty-state hide">
+                <p>Gagal memuat data projects. Silakan coba lagi.</p>
+            </div>
+
+            <!-- Empty state -->
+            <div id="empty" class="empty-state hide">
+                <p>Belum ada proyek yang ditambahkan atau ditemukan.</p>
+            </div>
+
+            <!-- Project grid (filled by JavaScript) -->
+            <div id="grid" class="project-grid hide"></div>
 
         </div>
     </section>
 </main>
+
+<script>
+    const PROJECTS_ENDPOINT = "{% url 'main:get_project_json' %}";
+    const CAN_EDIT = "{{ can_edit|yesno:'true,false' }}" === "true";
+    const CAN_CREATE_OR_DELETE = "{{ can_create_or_delete|yesno:'true,false' }}" === "true";
+    const IS_AUTHENTICATED = "{{ user.is_authenticated|yesno:'true,false' }}" === "true";
+    const CSRF_TOKEN = "{{ csrf_token }}";
+
+
+    let projectsAbortController;
+
+    const loadingState = document.getElementById('loading');
+    const errorState = document.getElementById('error');
+    const emptyState = document.getElementById('empty');
+    const gridContainer = document.getElementById('grid');
+    const searchForm = document.getElementById('project-search-form');
+    const searchInput = document.getElementById('search-input');
+    const projectCount = document.getElementById('project-count');
+
+    function displayPageSection({ showLoading = false, showError = false, showEmpty = false, showGrid = false } = {}) {
+        loadingState.classList.toggle('hide', !showLoading);
+        errorState.classList.toggle('hide', !showError);
+        emptyState.classList.toggle('hide', !showEmpty);
+        gridContainer.classList.toggle('hide', !showGrid);
+    }
+
+    function buildProjectCardElement(item, index) {
+        const project = item.fields;
+        const projectId = item.pk;
+
+        const articleElement = document.createElement('article');
+        articleElement.className = 'project-card';
+        articleElement.dataset.projectId = projectId;
+
+        const numberText = String(index + 1).padStart(2, '0');
+
+        const urlHtml = project.url
+            ? `<a href="${project.url}" class="project-link" target="_blank" rel="noopener noreferrer">Visit <span>↗</span></a>`
+            : '';
+
+        const isStarredClass = project.is_starred ? " is-starred" : "";
+        const starText = project.is_starred ? "Unstar" : "Star";
+        const starTitle = project.star_count > 0
+            ? `Dibintangi oleh ${project.starred_by_names}`
+            : "Belum ada yang memberi bintang";
+
+        const starFormHtml = `
+            <form method="post" action="/project/${projectId}/star/" class="star-form">
+                <input type="hidden" name="csrfmiddlewaretoken" value="${CSRF_TOKEN}">
+                <button type="submit"
+                        class="button button-star${isStarredClass}"
+                        title="${starTitle}">
+                    <span aria-hidden="true">★</span>
+                    ${starText}
+                    <span class="star-count">${project.star_count}</span>
+                </button>
+            </form>
+        `;
+
+        const editHtml = CAN_EDIT
+            ? `<a href="/project/${projectId}/edit/" class="button button-small">Edit</a>`
+            : '';
+
+        const deleteHtml = CAN_CREATE_OR_DELETE
+            ? `<form method="post" action="/project/${projectId}/delete/" style="display:inline;"
+                     onsubmit="return confirm('Yakin ingin menghapus proyek ini?');">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="${CSRF_TOKEN}">
+                    <button type="submit" class="button button-danger button-small">Hapus</button>
+                </form>`
+            : '';
+
+        articleElement.innerHTML = `
+            <div class="project-card-top">
+                <span class="experience-number">${numberText}</span>
+                <span class="project-year">${project.year}</span>
+            </div>
+            <h2 class="project-title">${project.title}</h2>
+            <p class="project-description">${project.description}</p>
+            <p class="project-tech">${project.tech_stack}</p>
+            <div class="card-actions">
+                ${urlHtml}
+                ${starFormHtml}
+                ${editHtml}
+                ${deleteHtml}
+            </div>
+        `;
+        return articleElement;
+    }
+
+    async function fetchProjects(searchQuery = "") {
+        if (projectsAbortController) projectsAbortController.abort();
+        projectsAbortController = new AbortController();
+
+        try {
+            displayPageSection({ showLoading: true });
+
+            const url = searchQuery
+                ? `${PROJECTS_ENDPOINT}?title=${encodeURIComponent(searchQuery)}`
+                : PROJECTS_ENDPOINT;
+
+            const response = await fetch(url, {
+                headers: { 'Accept': 'application/json' },
+                signal: projectsAbortController.signal,
+            });
+            if (!response.ok) throw new Error('Failed to fetch data');
+
+            const projectData = await response.json();
+            projectCount.textContent = String(projectData.length).padStart(2, '0');
+
+            if (projectData.length === 0) {
+                displayPageSection({ showEmpty: true });
+            } else {
+                gridContainer.innerHTML = '';
+                projectData.forEach((item, index) => {
+                    gridContainer.appendChild(buildProjectCardElement(item, index));
+                });
+                displayPageSection({ showGrid: true });
+            }
+        } catch (error) {
+            if (error.name === 'AbortError') return;
+            console.error('Error loading projects:', error);
+            displayPageSection({ showError: true });
+        }
+    }
+
+    searchForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        fetchProjects(searchInput.value.trim());
+    });
+
+    fetchProjects(searchInput.value.trim());
+</script>
 {% endblock content %}

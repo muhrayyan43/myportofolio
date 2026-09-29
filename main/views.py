@@ -168,7 +168,7 @@ def get_experience_xml(request):
 def show_project(request):
     context = {
         "name": AUTHOR_NAME,
-        "project_list": Project.objects.all(),
+        "title_query": request.GET.get("title", "").strip(),
     }
     return render(request, "project.html", context)
 
