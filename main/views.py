@@ -235,8 +235,17 @@ def toggle_star(request, project_id):
     if request.method == "POST":
         if request.user in project.starred_by.all():
             project.starred_by.remove(request.user)
+            is_starred = False
         else:
             project.starred_by.add(request.user)
+            is_starred = True
+
+        wants_json = "application/json" in request.headers.get("Accept", "")
+        if wants_json:
+            return JsonResponse({
+                "is_starred": is_starred,
+                "star_count": project.starred_by.count(),
+            })
 
     return redirect("main:show_project")
 

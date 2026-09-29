@@ -282,6 +282,46 @@
     if (projectForm) {
         projectForm.addEventListener('submit', addProject);
     }
+    gridContainer.addEventListener('submit', async function (event) {
+        const starForm = event.target.closest('form.star-form');
+        if (!starForm) return;
+
+        event.preventDefault();
+        if (!IS_AUTHENTICATED) {
+            window.location.href = '/login/?next=' +
+                encodeURIComponent(window.location.pathname + window.location.search);
+            return;
+        }
+
+        const starButton = starForm.querySelector('button.button-star');
+        starButton.disabled = true;
+
+        try {
+            const response = await fetch(starForm.action, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Accept': 'application/json',
+                },
+                body: new FormData(starForm),
+            });
+
+            if (!response.ok) throw new Error('star request failed');
+            const result = await response.json();
+
+            // In-place update: toggle class, swap label, refresh count.
+            starButton.classList.toggle('is-starred', result.is_starred);
+            starButton.innerHTML =
+                '<span aria-hidden="true">★</span> ' +
+                (result.is_starred ? 'Unstar' : 'Star') +
+                ' <span class="star-count">' + result.star_count + '</span>';
+        } catch (error) {
+            console.error('Error toggling star:', error);
+            showToast('Gagal', 'Tidak bisa memberi bintang saat ini.', 'error');
+        } finally {
+            starButton.disabled = false;
+        }
+    });
 
     function closeProjectModal() {
         const modal = document.getElementById('add-project-modal');
