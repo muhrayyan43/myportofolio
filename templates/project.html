@@ -21,9 +21,12 @@
                     </p>
 
                     {% if can_create_or_delete %}
-                        <a href="{% url 'main:create_project' %}" class="button project-add-button">
-                            + Tambah Proyek
-                        </a>
+                        <button type="button"
+                                class="button project-add-button"
+                                popovertarget="add-project-modal">
+                            <span aria-hidden="true">+</span>
+                            Tambah Proyek
+                        </button>
                     {% endif %}
                 </div>
 
@@ -66,6 +69,10 @@
         </div>
     </section>
 </main>
+
+{% if can_create_or_delete %}
+    {% include "components/project_form_modal.html" %}
+{% endif %}
 
 <script>
     const PROJECTS_ENDPOINT = "{% url 'main:get_project_json' %}";
@@ -209,6 +216,12 @@
         searchProjects();
     });
 
+    function closeProjectModal() {
+        const modal = document.getElementById('add-project-modal');
+        if (modal) modal.hidePopover();
+    }
+
+    // Initial load — respects a pre-filled ?title= query in the URL.
     fetchProjects(searchInput.value.trim());
 </script>
 {% endblock content %}

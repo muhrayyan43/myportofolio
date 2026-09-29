@@ -169,6 +169,7 @@ def show_project(request):
     context = {
         "name": AUTHOR_NAME,
         "title_query": request.GET.get("title", "").strip(),
+        "form": ProjectForm(),
     }
     return render(request, "project.html", context)
 
