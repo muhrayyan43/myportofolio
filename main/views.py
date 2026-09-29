@@ -223,6 +223,9 @@ def delete_project(request, project_id):
     project = get_object_or_404(Project, pk=project_id)
     if request.method == "POST":
         project.delete()
+        wants_json = "application/json" in request.headers.get("Accept", "")
+        if wants_json:
+            return JsonResponse({"deleted": True, "pk": str(project_id)})
         messages.success(request, "Proyek berhasil dihapus!")
         return redirect("main:show_project")
     return redirect("main:show_project")
