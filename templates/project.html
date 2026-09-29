@@ -48,6 +48,9 @@
                 <button type="submit" class="button">Cari</button>
             </form>
 
+            <!-- Small summary line (filled by JS): "3 proyek untuk 'django'" -->
+            <p id="result-summary" class="result-summary hide"></p>
+
             <!-- Loading state -->
             <div id="loading" class="empty-state hide">
                 <p>Memuat projects...</p>
@@ -58,9 +61,9 @@
                 <p>Gagal memuat data projects. Silakan coba lagi.</p>
             </div>
 
-            <!-- Empty state -->
+            <!-- Empty state: text swapped by JS depending on search vs no data -->
             <div id="empty" class="empty-state hide">
-                <p>Belum ada proyek yang ditambahkan atau ditemukan.</p>
+                <p id="empty-message">Belum ada proyek yang ditambahkan.</p>
             </div>
 
             <!-- Project grid (filled by JavaScript) -->
@@ -91,6 +94,8 @@
     const searchForm = document.getElementById('project-search-form');
     const searchInput = document.getElementById('search-input');
     const projectCount = document.getElementById('project-count');
+    const resultSummary = document.getElementById('result-summary');
+    const emptyMessage = document.getElementById('empty-message');
 
     function displayPageSection({ showLoading = false, showError = false, showEmpty = false, showGrid = false } = {}) {
         loadingState.classList.toggle('hide', !showLoading);
@@ -191,7 +196,20 @@
             const projectData = await response.json();
             projectCount.textContent = String(projectData.length).padStart(2, '0');
 
+            if (searchQuery) {
+                resultSummary.textContent = projectData.length === 0
+                    ? `Tidak ada proyek dengan nama "${searchQuery}".`
+                    : `${projectData.length} proyek untuk "${searchQuery}".`;
+                resultSummary.classList.remove('hide');
+            } else {
+                resultSummary.classList.add('hide');
+            }
+
             if (projectData.length === 0) {
+                // Distinguish "no data at all" from "search didn't match".
+                emptyMessage.textContent = searchQuery
+                    ? `Tidak ada proyek dengan nama "${searchQuery}". Coba kata kunci lain.`
+                    : 'Belum ada proyek yang ditambahkan.';
                 displayPageSection({ showEmpty: true });
             } else {
                 gridContainer.innerHTML = '';

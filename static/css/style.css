@@ -1928,3 +1928,11 @@ body::after {
         text-align: center;
     }
 }
+
+.result-summary {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    margin: 0 0 1rem 0;
+    letter-spacing: 0.02em;
+}
