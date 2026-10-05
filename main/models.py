@@ -26,6 +26,9 @@ class Experience(models.Model):
     # Timestamp asli — auto, tidak ikut ke form (dikecualikan sesuai tugas)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    starred_by = models.ManyToManyField(
+        User, related_name="starred_experiences", blank=True
+    )
 
     class Meta:
         ordering = ["-started_at"]

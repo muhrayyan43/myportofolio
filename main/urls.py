@@ -23,6 +23,7 @@ from main.views import (
     show_starred_projects,
     get_project_json,
     get_project_xml,
+    toggle_experience_star,
 )
 
 
@@ -52,6 +53,11 @@ urlpatterns = [
     ),
     path("api/experience/", get_experience_json, name="get_experience_json"),
     path("api/experience/xml/", get_experience_xml, name="get_experience_xml"),
+    path(
+        "experience/<int:experience_id>/star/",
+        toggle_experience_star,
+        name="toggle_experience_star",
+    ),
 
     # Project
     path("project/", show_project, name="show_project"),

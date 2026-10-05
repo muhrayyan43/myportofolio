@@ -104,15 +104,6 @@
         gridContainer.classList.toggle('hide', !showGrid);
     }
 
-    function escapeHtml(value) {
-        return String(value ?? '')
-            .replaceAll('&', '&amp;')
-            .replaceAll('<', '&lt;')
-            .replaceAll('>', '&gt;')
-            .replaceAll('"', '&quot;')
-            .replaceAll("'", '&#39;');
-    }
-
     function buildProjectCardElement(item, index) {
         const project = item.fields;
         const projectId = item.pk;
@@ -248,17 +239,6 @@
     // -----------------------------------------------------------------
     const CREATE_PROJECT_ENDPOINT = "{% url 'main:create_project_ajax' %}";
     const projectForm = document.getElementById('project-form');
-
-    function getCookie(name) {
-        if (!document.cookie) return null;
-        for (const raw of document.cookie.split(';')) {
-            const cookie = raw.trim();
-            if (cookie.startsWith(name + '=')) {
-                return decodeURIComponent(cookie.substring(name.length + 1));
-            }
-        }
-        return null;
-    }
 
     async function addProject(event) {
         event.preventDefault();
