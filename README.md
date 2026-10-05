@@ -137,3 +137,38 @@ AI yang dipakai dan mana yang dibuang.
 karangan AI.
 - Saya sempat meminta perbaikan tampilan navbar. Claude merekomendasikan beberapa opsi yang kompleks, 
 tapi saya tidak jadi menggunakannya.
+
+
+### Tugas 5
+
+1. **Debouncing** adalah teknik menunda pemanggilan sebuah fungsi sampai event berhenti terjadi selama jeda tertentu. Setiap event baru membatalkan timer lama dan memulai hitungan dari awal, jadi fungsi hanya berjalan sekali setelah pengguna diam. Pada pencarian AJAX, tanpa debouncing setiap ketukan tombol mengirim satu request: mengetik `backend` berarti tujuh request ke server dan tujuh query ke database, padahal yang dibutuhkan hanya hasil untuk kata terakhir. Debouncing memangkas beban server dan database, menghemat kuota pengguna, dan mengurangi tampilan yang berkedip. Di halaman Experience saya memakai jeda 400 ms lewat helper `debounce()` di `static/js/utils.js`. Tombol Enter membatalkan timer dan langsung mencari, dan `AbortController` membatalkan request lama yang masih berjalan sehingga hasil lama tidak menimpa hasil baru.
+```javascript
+   const debouncedSearch = debounce(() => loadPage({ reset: true }), 400);
+   searchInput.addEventListener('input', debouncedSearch);
+```
+
+2. `fetch()` tidak langsung mengembalikan data, melainkan sebuah **Promise** yang baru selesai setelah server membalas. `await` (hanya bisa dipakai di dalam fungsi `async`) menghentikan sementara eksekusi fungsi itu sampai Promise selesai, lalu mengembalikan nilainya, yaitu objek `Response`. `response.json()` juga mengembalikan Promise, jadi butuh `await` kedua. Tanpa `await`, variabel berisi Promise yang masih *pending*, bukan data. Akibatnya `response.ok` bernilai `undefined`, `response.json()` gagal karena Promise tidak punya method itu, kode di bawahnya berjalan sebelum data tiba, dan error dari request yang gagal tidak tertangkap oleh `try/catch` di sekitarnya (menjadi *unhandled rejection*).
+```javascript
+   const response = fetch(url);        // Promise { <pending> }
+   console.log(response.ok);           // undefined
+   response.json();                    // TypeError: response.json is not a function
+
+   const ok = await fetch(url);        // Response
+   const data = await ok.json();       // objek JSON
+```
+
+3. **XSS (Cross-Site Scripting)** adalah serangan ketika penyerang berhasil menyisipkan kode JavaScript ke halaman, lalu kode itu dijalankan di browser pengguna lain. Jenis yang paling berbahaya adalah *stored XSS*: payload seperti `<img src="x" onerror="alert('XSS!')">` disimpan di database dan berjalan setiap kali data itu ditampilkan. Karena berjalan di halaman kita sendiri, skrip penyerang bisa membaca cookie `csrftoken` dan mengirim request atas nama korban, sehingga perlindungan CSRF ikut tidak berguna.
+
+   Template Django melakukan **auto-escaping** secara default: `{{ experience.title }}` mengubah `<` menjadi `&lt;`, sehingga payload tampil sebagai teks. Saat data ditampilkan lewat JavaScript, Django tidak lagi terlibat. Developer sendiri yang memasukkan data ke DOM, dan kalau itu dilakukan lewat `innerHTML` atau penggabungan string, browser mem-parse data sebagai HTML sungguhan. Tidak ada escaping otomatis, jadi tanggung jawabnya pindah ke developer.
+```javascript
+   card.innerHTML = `<h2>${item.title}</h2>`;    // rentan: payload dieksekusi
+   const h2 = document.createElement('h2');
+   h2.textContent = item.title;                   // aman: selalu teks
+```
+   Pencegahan yang saya terapkan: (a) di klien, kartu Experience dibangun dengan `createElement` + `textContent` tanpa `innerHTML`, sedangkan halaman Projects memakai `escapeHtml()`. (b) Di server, `ExperienceForm` membersihkan `title`, `company`, dan `description` dengan `strip_tags` di method `clean_<field>`, dan menolak nilai yang kosong setelah dibersihkan, sehingga payload di atas dibalas `400`. (c) `URLField` menolak skema `javascript:`.
+
+## AI Disclosure
+
+- **Tools:** Claude (Anthropic). 
+- **Strategi prompting:** Saya menulis prompt terstruktur berisi peran, konteks proyek, aturan kerja, rincian tiap commit, standar kualitas, dan permintaan tabel verifikasi akhir. 
+- **Bagian yang dibantu AI:** `static/js/utils.js`, `static/js/experience.js`, view JSON dan AJAX di `main/views.py`, `clean_*` di `ExperienceForm`, template dan modal Experience, CSS tambahan, serta draft README ini.

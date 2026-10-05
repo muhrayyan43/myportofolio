@@ -12,8 +12,8 @@
     /** Delay before a search request fires after the last keystroke. */
     const SEARCH_DEBOUNCE_MS = 400;
     /** Placeholder id baked into the URL templates by {% url ... 0 %}. */
-    const URL_ID_PLACEHOLDER = '/0/';
-
+    const URL_ID_PLACEHOLDER = '/00000000-0000-0000-0000-000000000000/';
+    
     const MESSAGES = {
         emptyAll: 'Belum ada experience yang ditambahkan.',
         emptySearch: (query) => `Tidak ada hasil untuk "${query}".`,
