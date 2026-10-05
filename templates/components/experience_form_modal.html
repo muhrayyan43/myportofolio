@@ -1,0 +1,55 @@
+{# Add-experience modal (Popover API). Reuses the .project-form-modal
+   styles from Tutorial 05. The form's action points to the regular
+   create_experience view as a no-JavaScript fallback; experience.js
+   intercepts the submit and posts to create_experience_ajax instead. #}
+
+<div id="experience-form-modal"
+     class="project-form-modal"
+     popover="auto"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="experience-form-modal-title">
+
+    <button type="button"
+            class="project-form-modal__backdrop"
+            popovertarget="experience-form-modal"
+            popovertargetaction="hide"
+            aria-label="Tutup form tambah experience"></button>
+
+    <div class="project-form-modal__content">
+        <button type="button"
+                class="project-form-modal__close"
+                popovertarget="experience-form-modal"
+                popovertargetaction="hide"
+                aria-label="Tutup form tambah experience">&times;</button>
+
+        <h2 id="experience-form-modal-title">Tambah Experience Baru</h2>
+
+        <form id="experience-form"
+              method="post"
+              action="{% url 'main:create_experience' %}"
+              class="project-form">
+            {% csrf_token %}
+
+            <p class="form-error form-error--general hide" data-error-for="__all__" role="alert"></p>
+
+            {% for field in form %}
+                <div class="form-group">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    <p class="form-error hide" data-error-for="{{ field.name }}"></p>
+                </div>
+            {% endfor %}
+
+            <div class="project-form-modal__actions">
+                <button type="button"
+                        class="button button-secondary"
+                        popovertarget="experience-form-modal"
+                        popovertargetaction="hide">
+                    Batal
+                </button>
+                <button type="submit" class="button">Simpan Experience</button>
+            </div>
+        </form>
+    </div>
+</div>

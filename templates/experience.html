@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block meta %}
 <title>Experience - {{ name }}</title>
@@ -6,12 +7,13 @@
 
 {% block content %}
 <main>
-    {# Config is passed through data-* attributes instead of inline JS
-       variables, so the script can later move to a static file as-is. #}
+    {# Config travels via data-* attributes so experience.js stays a
+       plain static file with no template tags inside it. #}
     <section class="project-section"
              id="experience-app"
              aria-busy="true"
              data-list-url="{% url 'main:get_experience_json' %}"
+             data-create-url="{% url 'main:create_experience_ajax' %}"
              data-star-url-template="{% url 'main:toggle_experience_star' 0 %}"
              data-edit-url-template="{% url 'main:update_experience' 0 %}"
              data-delete-url-template="{% url 'main:delete_experience' 0 %}"
@@ -21,7 +23,7 @@
              data-can-delete="{{ can_create_or_delete|yesno:'true,false' }}">
 
         {# Rendering the token makes Django set the csrftoken cookie that
-           getCookie() reads for AJAX POSTs (star toggle, delete form). #}
+           getCookie() reads for every AJAX POST on this page. #}
         {% csrf_token %}
 
         <div class="container">
@@ -38,9 +40,12 @@
                     </p>
 
                     {% if can_create_or_delete %}
-                        <a href="{% url 'main:create_experience' %}" class="button project-add-button">
-                            + Tambah Experience
-                        </a>
+                        <button type="button"
+                                class="button project-add-button"
+                                popovertarget="experience-form-modal">
+                            <span aria-hidden="true">+</span>
+                            Tambah Experience
+                        </button>
                     {% endif %}
                 </div>
 
@@ -82,288 +87,23 @@
                 <button type="button" id="experience-retry" class="button">Coba lagi</button>
             </div>
 
-            <!-- List (filled by JavaScript) -->
+            <!-- List (filled by experience.js) -->
             <div id="experience-list" class="project-grid hide" aria-live="polite"></div>
+
+            <!-- Load more -->
+            <div id="experience-load-more-wrap" class="load-more hide">
+                <button type="button" id="experience-load-more" class="button button-secondary">
+                    Muat lebih banyak
+                </button>
+            </div>
 
         </div>
     </section>
 </main>
 
-<script>
-(function () {
-    'use strict';
+{% if can_create_or_delete %}
+    {% include "components/experience_form_modal.html" %}
+{% endif %}
 
-    /** Delay before a search request fires after the last keystroke. */
-    const SEARCH_DEBOUNCE_MS = 400;
-    /** Placeholder id baked into the URL templates by {% url ... 0 %}. */
-    const URL_ID_PLACEHOLDER = '/0/';
-
-    const root = document.getElementById('experience-app');
-    if (!root) return;
-
-    const config = {
-        listUrl: root.dataset.listUrl,
-        starUrlTemplate: root.dataset.starUrlTemplate,
-        editUrlTemplate: root.dataset.editUrlTemplate,
-        deleteUrlTemplate: root.dataset.deleteUrlTemplate,
-        loginUrl: root.dataset.loginUrl,
-        isAuthenticated: root.dataset.isAuthenticated === 'true',
-        canEdit: root.dataset.canEdit === 'true',
-        canDelete: root.dataset.canDelete === 'true',
-    };
-
-    const elements = {
-        searchForm: document.getElementById('experience-search-form'),
-        searchInput: document.getElementById('experience-search-input'),
-        list: document.getElementById('experience-list'),
-        loading: document.getElementById('experience-loading'),
-        empty: document.getElementById('experience-empty'),
-        emptyMessage: document.getElementById('experience-empty-message'),
-        error: document.getElementById('experience-error'),
-        retryButton: document.getElementById('experience-retry'),
-        count: document.getElementById('experience-count'),
-    };
-
-    /** In-flight list request; aborted when a newer search starts. */
-    let activeController = null;
-
-    /**
-     * Build a URL for one experience from a template like "/experience/0/star/".
-     * @param {string} template
-     * @param {number|string} id
-     * @returns {string}
-     */
-    function urlFor(template, id) {
-        return template.replace(URL_ID_PLACEHOLDER, `/${encodeURIComponent(id)}/`);
-    }
-
-    /**
-     * Show exactly one of: loading | empty | error | list.
-     * @param {'loading'|'empty'|'error'|'list'} name
-     */
-    function showState(name) {
-        elements.loading.classList.toggle('hide', name !== 'loading');
-        elements.empty.classList.toggle('hide', name !== 'empty');
-        elements.error.classList.toggle('hide', name !== 'error');
-        elements.list.classList.toggle('hide', name !== 'list');
-        root.setAttribute('aria-busy', String(name === 'loading'));
-    }
-
-    /**
-     * Create an element whose text is set via textContent, so server data
-     * is always rendered as text and never parsed as HTML (XSS-safe).
-     * @param {string} tag
-     * @param {string} [className]
-     * @param {string} [text]
-     * @returns {HTMLElement}
-     */
-    function createElement(tag, className, text) {
-        const element = document.createElement(tag);
-        if (className) element.className = className;
-        if (text !== undefined && text !== null) element.textContent = text;
-        return element;
-    }
-
-    /**
-     * Format an ISO date as e.g. "Jan 2024" (Indonesian locale).
-     * @param {string|null} isoDate
-     * @returns {string}
-     */
-    function formatMonth(isoDate) {
-        if (!isoDate) return '';
-        const date = new Date(`${isoDate}T00:00:00`);
-        if (Number.isNaN(date.getTime())) return isoDate;
-        return date.toLocaleDateString('id-ID', { month: 'short', year: 'numeric' });
-    }
-
-    /**
-     * Render the star button's look for a given state.
-     * @param {HTMLButtonElement} button
-     * @param {boolean} isStarred
-     * @param {number} starCount
-     */
-    function applyStarState(button, isStarred, starCount) {
-        const icon = createElement('span', '', '★');
-        icon.setAttribute('aria-hidden', 'true');
-        button.classList.toggle('is-starred', isStarred);
-        button.setAttribute('aria-pressed', String(isStarred));
-        button.replaceChildren(
-            icon,
-            document.createTextNode(isStarred ? ' Unstar ' : ' Star '),
-            createElement('span', 'star-count', String(starCount)),
-        );
-    }
-
-    function buildStarButton(item) {
-        const button = createElement('button', 'button button-star');
-        button.type = 'button';
-        button.dataset.action = 'toggle-star';
-        button.dataset.id = item.id;
-        applyStarState(button, item.is_starred, item.star_count);
-        return button;
-    }
-
-    function buildDeleteForm(item) {
-        const form = createElement('form', 'experience-delete-form');
-        form.method = 'post';
-        form.action = urlFor(config.deleteUrlTemplate, item.id);
-        form.dataset.action = 'delete';
-        form.dataset.title = item.title;
-
-        const token = document.createElement('input');
-        token.type = 'hidden';
-        token.name = 'csrfmiddlewaretoken';
-        token.value = getCookie('csrftoken') || '';
-
-        const button = createElement('button', 'button button-danger button-small', 'Hapus');
-        button.type = 'submit';
-
-        form.append(token, button);
-        return form;
-    }
-
-    /**
-     * Build one experience card from a JSON item.
-     * @param {Object} item - One entry of `results` from the list endpoint.
-     * @param {number} index - Position in the list (for the 01, 02 badge).
-     * @returns {HTMLElement}
-     */
-    function buildCard(item, index) {
-        const card = createElement('article', 'project-card experience-card');
-        card.dataset.id = item.id;
-
-        const top = createElement('div', 'project-card-top');
-        top.append(
-            createElement('span', 'experience-number', String(index + 1).padStart(2, '0')),
-            createElement('span', 'project-year', item.category_display),  // FIELD
-        );
-
-        const endLabel = item.ended_at ? formatMonth(item.ended_at) : 'Sekarang';
-        const period = `${formatMonth(item.started_at)} – ${endLabel}`;  // FIELD
-
-        const actions = createElement('div', 'card-actions');
-        actions.append(buildStarButton(item));
-        if (config.canEdit) {
-            const editLink = createElement('a', 'button button-small', 'Edit');
-            editLink.href = urlFor(config.editUrlTemplate, item.id);
-            actions.append(editLink);
-        }
-        if (config.canDelete) {
-            actions.append(buildDeleteForm(item));
-        }
-
-        card.append(
-            top,
-            createElement('h2', 'project-title', item.title),
-            createElement('p', 'project-tech', item.company),  // FIELD
-            createElement('p', 'experience-period', period),
-            createElement('p', 'project-description', item.description),
-            actions,
-        );
-        return card;
-    }
-
-    function renderList(results) {
-        const fragment = document.createDocumentFragment();
-        results.forEach((item, index) => fragment.append(buildCard(item, index)));
-        elements.list.replaceChildren(fragment);
-    }
-
-    /**
-     * Fetch and render the list. A newer call aborts any older one, so a
-     * slow reply for an old query can never overwrite fresher results.
-     * @param {string} query
-     */
-    async function loadExperiences(query) {
-        if (activeController) activeController.abort();
-        const controller = new AbortController();
-        activeController = controller;
-
-        showState('loading');
-
-        const url = new URL(config.listUrl, window.location.origin);
-        if (query) url.searchParams.set('q', query);
-
-        try {
-            const data = await fetchJson(url, { signal: controller.signal });
-            const results = Array.isArray(data.results) ? data.results : [];
-            elements.count.textContent = String(results.length).padStart(2, '0');
-
-            if (results.length === 0) {
-                elements.emptyMessage.textContent = query
-                    ? `Tidak ada hasil untuk "${query}".`
-                    : 'Belum ada experience yang ditambahkan.';
-                showState('empty');
-                return;
-            }
-
-            renderList(results);
-            showState('list');
-        } catch (error) {
-            if (error.name === 'AbortError') return;
-            showState('error');
-        } finally {
-            if (activeController === controller) activeController = null;
-        }
-    }
-
-    /**
-     * Toggle the star of one experience in place (no reload).
-     * Anonymous visitors are sent to the login page instead.
-     * @param {HTMLButtonElement} button
-     */
-    async function toggleStar(button) {
-        if (!config.isAuthenticated) {
-            const next = window.location.pathname + window.location.search;
-            window.location.href = `${config.loginUrl}?next=${encodeURIComponent(next)}`;
-            return;
-        }
-
-        button.disabled = true;
-        try {
-            const data = await fetchJson(urlFor(config.starUrlTemplate, button.dataset.id), {
-                method: 'POST',
-                headers: { 'X-CSRFToken': getCookie('csrftoken') || '' },
-            });
-            applyStarState(button, data.is_starred, data.star_count);
-        } catch (error) {
-            showToast('Gagal memberi bintang', error.message, 'error');
-        } finally {
-            button.disabled = false;
-        }
-    }
-
-    function currentQuery() {
-        return elements.searchInput.value.trim();
-    }
-
-    const debouncedSearch = debounce(() => loadExperiences(currentQuery()), SEARCH_DEBOUNCE_MS);
-
-    elements.searchInput.addEventListener('input', debouncedSearch);
-
-    elements.searchForm.addEventListener('submit', (event) => {
-        event.preventDefault();
-        debouncedSearch.cancel();
-        loadExperiences(currentQuery());
-    });
-
-    elements.retryButton.addEventListener('click', () => loadExperiences(currentQuery()));
-
-    // Cards are rebuilt on every load, so listen on the container
-    // (event delegation) instead of on each button.
-    elements.list.addEventListener('click', (event) => {
-        const starButton = event.target.closest('[data-action="toggle-star"]');
-        if (starButton) toggleStar(starButton);
-    });
-
-    elements.list.addEventListener('submit', (event) => {
-        const deleteForm = event.target.closest('form[data-action="delete"]');
-        if (deleteForm && !window.confirm(`Hapus "${deleteForm.dataset.title}"?`)) {
-            event.preventDefault();
-        }
-    });
-
-    loadExperiences(currentQuery());
-})();
-</script>
+<script src="{% static 'js/experience.js' %}" defer></script>
 {% endblock content %}

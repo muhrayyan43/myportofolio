@@ -9,7 +9,6 @@ from django.forms import (
     DateInput,
 )
 from django.utils.html import strip_tags
-
 from main.models import Experience, Project
 
 
@@ -113,6 +112,24 @@ class ExperienceForm(ModelForm):
             ),
         }
 
+    def _clean_text(self, field_name, label):
+        """Strip tags and whitespace; reject values that end up empty."""
+        value = strip_tags(self.cleaned_data.get(field_name) or "").strip()
+        if not value:
+            raise ValidationError(
+                f"{label} tidak boleh kosong atau hanya berisi tag HTML."
+            )
+        return value
+
+    def clean_title(self):  # FIELD: title
+        return self._clean_text("title", "Posisi")
+
+    def clean_company(self):  # FIELD: company
+        return self._clean_text("company", "Perusahaan")
+
+    def clean_description(self):  # FIELD: description
+        return self._clean_text("description", "Deskripsi")
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # HTML5 <input type="date"> mengirim & butuh format YYYY-MM-DD
