@@ -2098,3 +2098,23 @@ body::after {
     color: var(--muted);
     white-space: nowrap;
 }
+
+
+.contact-edit-form {
+    display: inline;
+}
+
+.contact-row--editing {
+    background: var(--paper);
+}
+
+.contact-row--editing input {
+    width: 100%;
+    min-width: 9rem;
+    padding: 0.45rem 0.6rem;
+    border: var(--border);
+    background: var(--white);
+    font-family: var(--body);
+    font-size: 0.95rem;
+    color: var(--ink);
+}

@@ -1,11 +1,11 @@
 from django.db.models import Q
-from django.http import HttpResponse
+from django.http import HttpResponse, QueryDict
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from contacts.forms import ContactForm
 from contacts.models import Contact
-from main.permissions import can_create_or_delete
+from main.permissions import can_create_or_delete, can_edit
 from main.views import AUTHOR_NAME
 
 
@@ -19,6 +19,20 @@ def _plain_text(message, status):
 def _render_rows(request, contacts):
     """Render only the table rows: the fragment HTMX swaps into #contact-rows."""
     return render(request, "contacts/_contact_rows.html", {"contacts": contacts})
+
+
+def _render_row(request, contact):
+    """Render one display row (the normal, non-editing version)."""
+    return render(request, "contacts/_contact_row.html", {"contact": contact})
+
+
+def _render_edit_row(request, contact, form):
+    """Render one row as an inline edit form, with errors when ``form`` has any."""
+    return render(
+        request,
+        "contacts/_contact_edit_row.html",
+        {"contact": contact, "form": form},
+    )
 
 
 def contact_list(request):
@@ -73,3 +87,41 @@ def contact_delete(request, pk):
     contact = get_object_or_404(Contact, pk=pk)
     contact.delete()
     return HttpResponse("")
+
+
+@require_GET
+def contact_edit(request, pk):
+    """Return the row as an inline edit form (editors and owners only)."""
+    if not can_edit(request.user):
+        return _plain_text("Kamu tidak punya akses untuk mengubah kontak.", 403)
+
+    contact = get_object_or_404(Contact, pk=pk)
+    return _render_edit_row(request, contact, ContactForm(instance=contact))
+
+
+@require_GET
+def contact_row(request, pk):
+    """Return the normal display row; the Batal button uses it to cancel."""
+    contact = get_object_or_404(Contact, pk=pk)
+    return _render_row(request, contact)
+
+
+@require_http_methods(["PUT"])
+def contact_update(request, pk):
+    """Save an inline edit sent with hx-put and return the display row.
+
+    Django fills request.POST only for POST requests, so the PUT body (for
+    example ``name=Ani&email=ani%40example.com``) is parsed with QueryDict.
+    Invalid input re-renders the edit row with its errors. That reply is a
+    200 on purpose, because HTMX only swaps successful responses.
+    """
+    if not can_edit(request.user):
+        return _plain_text("Kamu tidak punya akses untuk mengubah kontak.", 403)
+
+    contact = get_object_or_404(Contact, pk=pk)
+    form = ContactForm(QueryDict(request.body), instance=contact)
+    if not form.is_valid():
+        return _render_edit_row(request, contact, form)
+
+    form.save()
+    return _render_row(request, contact)

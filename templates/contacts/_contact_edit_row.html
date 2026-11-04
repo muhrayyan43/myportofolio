@@ -1,0 +1,42 @@
+{# <form> cannot wrap table cells, so the inputs point to the form in the last cell via form="edit-form-<id>". #}
+<tr id="contact-{{ contact.id }}" class="contact-row--editing">
+    <td>
+        <input type="text"
+               name="name"
+               value="{{ form.name.value|default_if_none:'' }}"
+               required
+               maxlength="100"
+               aria-label="Nama"
+               form="edit-form-{{ contact.id }}">
+        {% for error in form.name.errors %}
+            <p class="form-error">{{ error }}</p>
+        {% endfor %}
+    </td>
+    <td>
+        <input type="email"
+               name="email"
+               value="{{ form.email.value|default_if_none:'' }}"
+               required
+               aria-label="Email"
+               form="edit-form-{{ contact.id }}">
+        {% for error in form.email.errors %}
+            <p class="form-error">{{ error }}</p>
+        {% endfor %}
+    </td>
+    <td class="contact-actions">
+        <form id="edit-form-{{ contact.id }}"
+              class="contact-edit-form"
+              hx-put="{% url 'contacts:contact_update' contact.id %}"
+              hx-target="#contact-{{ contact.id }}"
+              hx-swap="outerHTML">
+            <button type="submit" class="button button-small">Simpan</button>
+        </form>
+        <button type="button"
+                class="button button-secondary button-small"
+                hx-get="{% url 'contacts:contact_row' contact.id %}"
+                hx-target="#contact-{{ contact.id }}"
+                hx-swap="outerHTML">
+            Batal
+        </button>
+    </td>
+</tr>
