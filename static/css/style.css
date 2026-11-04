@@ -2086,3 +2086,15 @@ body::after {
 .contacts-table .contact-actions > * + * {
     margin-left: 0.5rem;
 }
+
+
+.contact-search {
+    align-items: center;
+}
+
+.contact-search-indicator {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+}

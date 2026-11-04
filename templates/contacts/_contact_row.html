@@ -1,5 +1,16 @@
 <tr id="contact-{{ contact.id }}">
     <td>{{ contact.name }}</td>
     <td>{{ contact.email }}</td>
-    <td class="contact-actions"></td>
+    <td class="contact-actions">
+        {% if can_create_or_delete %}
+            <button type="button"
+                    class="button button-danger button-small"
+                    hx-delete="{% url 'contacts:contact_delete' contact.id %}"
+                    hx-target="closest tr"
+                    hx-swap="outerHTML"
+                    hx-confirm="Yakin hapus {{ contact.name }}?">
+                Hapus
+            </button>
+        {% endif %}
+    </td>
 </tr>

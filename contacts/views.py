@@ -1,6 +1,7 @@
+from django.db.models import Q
 from django.http import HttpResponse
-from django.shortcuts import render
-from django.views.decorators.http import require_POST
+from django.shortcuts import get_object_or_404, render
+from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from contacts.forms import ContactForm
 from contacts.models import Contact
@@ -44,3 +45,31 @@ def contact_add(request):
 
     form.save()
     return _render_rows(request, Contact.objects.all())
+
+
+@require_GET
+def contact_search(request):
+    """Return the rows whose name or email contains ``q`` (all rows if empty)."""
+    query = request.GET.get("q", "").strip()
+    contacts = Contact.objects.all()
+    if query:
+        contacts = contacts.filter(
+            Q(name__icontains=query) | Q(email__icontains=query)
+        )
+    return _render_rows(request, contacts)
+
+
+@require_http_methods(["DELETE"])
+def contact_delete(request, pk):
+    """Delete a contact and reply 200 with an empty body.
+
+    hx-swap="outerHTML" replaces the <tr> with that empty body, which removes
+    the row. The status must stay 200: HTMX skips the swap for 204 No
+    Content, so the row would stay on screen.
+    """
+    if not can_create_or_delete(request.user):
+        return _plain_text("Kamu tidak punya akses untuk menghapus kontak.", 403)
+
+    contact = get_object_or_404(Contact, pk=pk)
+    contact.delete()
+    return HttpResponse("")

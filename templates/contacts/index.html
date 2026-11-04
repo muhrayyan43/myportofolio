@@ -45,6 +45,20 @@
                 <p id="contact-form-error" class="form-error contact-form-error" role="alert"></p>
             {% endif %}
 
+            <div class="project-search contact-search">
+                <input type="search"
+                       name="q"
+                       placeholder="Cari nama atau email..."
+                       class="project-search__input"
+                       aria-label="Cari kontak berdasarkan nama atau email"
+                       autocomplete="off"
+                       hx-get="{% url 'contacts:contact_search' %}"
+                       hx-trigger="keyup changed delay:300ms, search"
+                       hx-target="#contact-rows"
+                       hx-indicator="#search-indicator">
+                <span id="search-indicator" class="htmx-indicator contact-search-indicator">Mencari...</span>
+            </div>
+            
             <div class="contacts-table-wrap">
                 <table class="contacts-table">
                     <thead>
