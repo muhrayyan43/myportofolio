@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block meta %}
+<title>Kontak - {{ name }}</title>
+<script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.11/dist/htmx.min.js"
+        integrity="sha384-2OatzQy1H+Zd/IIrjr1TcuDGqLXeHhbooAyJY1KdQMKnr4LZ22k31GBLdYKHmVjg"
+        crossorigin="anonymous"></script>
+{% endblock meta %}
+
+{% block content %}
+{# hx-headers is inherited by every hx-* element inside <main>, so each HTMX request sends the CSRF token. #}
+<main hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+    <section class="project-section" id="contacts">
+        <div class="container">
+
+            <div class="experience-intro">
+                <div>
+                    <p class="section-kicker">Tutorial 06 · HTMX</p>
+
+                    <h1>Kontak<span class="experience-star">✦</span></h1>
+
+                    <p class="experience-subtitle">
+                        Tambah, cari, ubah, dan hapus<br>
+                        tanpa reload halaman.
+                    </p>
+                </div>
+            </div>
+
+            {% if can_create_or_delete %}
+                <form class="contact-add-form"
+                      hx-post="{% url 'contacts:contact_add' %}"
+                      hx-target="#contact-rows"
+                      hx-swap="innerHTML"
+                      hx-on::after-request="
+                          const error = document.getElementById('contact-form-error');
+                          if (event.detail.successful) { this.reset(); error.textContent = ''; }
+                          else { error.textContent = event.detail.xhr.responseText || 'Kontak gagal disimpan.'; }">
+                    {% csrf_token %}
+                    <input type="text" name="name" placeholder="Nama" required maxlength="100"
+                           class="project-search__input" aria-label="Nama">
+                    <input type="email" name="email" placeholder="Email" required
+                           class="project-search__input" aria-label="Email">
+                    <button type="submit" class="button">Tambah</button>
+                </form>
+                <p id="contact-form-error" class="form-error contact-form-error" role="alert"></p>
+            {% endif %}
+
+            <div class="contacts-table-wrap">
+                <table class="contacts-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Nama</th>
+                            <th scope="col">Email</th>
+                            <th scope="col"><span class="sr-only">Aksi</span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="contact-rows">
+                        {% include "contacts/_contact_rows.html" %}
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </section>
+</main>
+{% endblock content %}
