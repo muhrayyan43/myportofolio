@@ -1,4 +1,5 @@
 from django.core.exceptions import PermissionDenied
+from rest_framework.permissions import SAFE_METHODS, BasePermission
 
 # The group name must match the group created in Django Admin.
 EDITOR_GROUP_NAME = "Editor"
@@ -47,3 +48,12 @@ def require_owner(user):
     """Raise HTTP 403 unless the user is the portfolio owner."""
     if not is_owner(user):
         raise PermissionDenied
+
+
+class IsPortfolioOwnerOrReadOnly(BasePermission):
+    """Anyone may read; only the portfolio owner (superuser) may write."""
+
+    message = "Only the portfolio owner can change projects."
+
+    def has_permission(self, request, view):
+        return request.method in SAFE_METHODS or request.user.is_superuser
