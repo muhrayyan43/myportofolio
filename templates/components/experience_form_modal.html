@@ -1,7 +1,9 @@
-{# Add-experience modal (Popover API). Reuses the .project-form-modal
-   styles from Tutorial 05. The form's action points to the regular
-   create_experience view as a no-JavaScript fallback; experience.js
-   intercepts the submit and sends JSON to POST /api/v1/experiences/. #}
+{# Add/edit experience modal (Popover API). Reuses the .project-form-modal
+   styles from Tutorial 05. experience.js switches it between two modes:
+   - create: POST /api/v1/experiences/ (owner only)
+   - edit:   PATCH /api/v1/experiences/<id>/ (Editor and owner)
+   The form's action points to the regular create_experience view as a
+   no-JavaScript fallback. #}
 
 <div id="experience-form-modal"
      class="project-form-modal"
@@ -14,14 +16,14 @@
             class="project-form-modal__backdrop"
             popovertarget="experience-form-modal"
             popovertargetaction="hide"
-            aria-label="Tutup form tambah experience"></button>
+            aria-label="Tutup form experience"></button>
 
     <div class="project-form-modal__content">
         <button type="button"
                 class="project-form-modal__close"
                 popovertarget="experience-form-modal"
                 popovertargetaction="hide"
-                aria-label="Tutup form tambah experience">&times;</button>
+                aria-label="Tutup form experience">&times;</button>
 
         <h2 id="experience-form-modal-title">Tambah Experience Baru</h2>
 

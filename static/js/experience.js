@@ -1,7 +1,7 @@
 /**
  * Experience page, backed by the DRF API at /api/v1/experiences/:
  * paginated list with debounced search, "load more", in-place star
- * toggle, add-experience modal, and delete.
+ * toggle, one modal for add (POST) and edit (PATCH), and delete.
  *
  * Every write (POST/PATCH/DELETE) goes through sendJson(), which sends
  * a JSON body and the X-CSRFToken header. Server data is rendered with
@@ -28,6 +28,10 @@
         loadMoreFailed: 'Data berikutnya gagal dimuat. Silakan coba lagi.',
         saving: 'Menyimpan...',
         createSuccess: 'Experience berhasil ditambahkan.',
+        updateSuccess: 'Experience berhasil diperbarui.',
+        noChanges: 'Tidak ada perubahan untuk disimpan.',
+        modalTitle: { create: 'Tambah Experience Baru', edit: 'Edit Experience' },
+        submitLabel: { create: 'Simpan Experience', edit: 'Simpan Perubahan' },
         deleteSuccess: 'Experience berhasil dihapus.',
         confirmDelete: (title) => `Hapus "${title}"?`,
         networkError: 'Tidak dapat terhubung ke server atau respons tidak valid. Silakan coba lagi.',
@@ -40,7 +44,6 @@
         listUrl: root.dataset.listUrl,
         detailUrlTemplate: root.dataset.detailUrlTemplate,
         starUrlTemplate: root.dataset.starUrlTemplate,
-        editUrlTemplate: root.dataset.editUrlTemplate,
         loginUrl: root.dataset.loginUrl,
         isAuthenticated: root.dataset.isAuthenticated === 'true',
         canEdit: root.dataset.canEdit === 'true',
@@ -59,9 +62,12 @@
         count: document.getElementById('experience-count'),
         loadMoreWrap: document.getElementById('experience-load-more-wrap'),
         loadMoreButton: document.getElementById('experience-load-more'),
-        // Rendered only for users allowed to create data; may be null.
+        // Rendered only for owners and Editors; may be null.
         modal: document.getElementById('experience-form-modal'),
+        modalTitle: document.getElementById('experience-form-modal-title'),
         form: document.getElementById('experience-form'),
+        // Rendered only for the owner; may be null.
+        addButton: document.getElementById('experience-add-button'),
     };
 
     /** Single source of truth for the list. */
@@ -77,6 +83,12 @@
 
     /** In-flight list request, aborted when a newer one starts. */
     let activeController = null;
+
+    /** Loaded experiences by id, used to prefill the edit modal. */
+    const itemsById = new Map();
+
+    /** Which mode the modal is in, and the item being edited. */
+    const formState = { mode: 'create', original: null };
 
     // ------------------------------------------------------------------
     // Small helpers
@@ -242,9 +254,11 @@
         const actions = createElement('div', 'card-actions');
         actions.append(buildStarButton(item));
         if (config.canEdit) {
-            const editLink = createElement('a', 'button button-small', 'Edit');
-            editLink.href = urlFor(config.editUrlTemplate, item.id);
-            actions.append(editLink);
+            const editButton = createElement('button', 'button button-small', 'Edit');
+            editButton.type = 'button';
+            editButton.dataset.action = 'edit';
+            editButton.dataset.id = item.id;
+            actions.append(editButton);
         }
         if (config.canDelete) {
             actions.append(buildDeleteButton(item));
@@ -267,8 +281,23 @@
      */
     function appendCards(items, offset) {
         const fragment = document.createDocumentFragment();
-        items.forEach((item, i) => fragment.append(buildCard(item, offset + i)));
+        items.forEach((item, i) => {
+            itemsById.set(item.id, item);
+            fragment.append(buildCard(item, offset + i));
+        });
         elements.list.append(fragment);
+    }
+
+    /**
+     * Swap one card for a freshly built one, keeping its position.
+     * @param {Object} item - The updated experience from the API.
+     */
+    function replaceCard(item) {
+        itemsById.set(item.id, item);
+        const card = elements.list.querySelector(`[data-id="${CSS.escape(item.id)}"]`);
+        if (!card) return;
+        const index = Array.prototype.indexOf.call(elements.list.children, card);
+        card.replaceWith(buildCard(item, index));
     }
 
     // ------------------------------------------------------------------
@@ -319,7 +348,10 @@
             if (requestId !== state.requestId) return;
 
             const results = Array.isArray(data.results) ? data.results : [];
-            if (reset) elements.list.replaceChildren();
+            if (reset) {
+                elements.list.replaceChildren();
+                itemsById.clear();
+            }
             appendCards(results, state.loadedCount);
 
             state.loadedCount += results.length;
@@ -372,6 +404,7 @@
         button.disabled = true;
         try {
             const data = await sendJson(urlFor(config.starUrlTemplate, button.dataset.id), 'POST');
+            itemsById.set(data.id, data);
             applyStarState(button, data.is_starred, data.star_count);
         } catch (error) {
             showToast('Gagal memberi bintang', error.message, 'error');
@@ -404,7 +437,7 @@
     }
 
     // ------------------------------------------------------------------
-    // Add-experience modal
+    // Add / edit modal
     // ------------------------------------------------------------------
 
     function clearFieldErrors(form) {
@@ -480,13 +513,94 @@
         }
     }
 
+    /**
+     * Only the fields that differ from the loaded item, so PATCH sends a
+     * partial update and leaves untouched fields alone.
+     * @param {Object} payload - From payloadFromForm().
+     * @param {Object} original - The item as last returned by the API.
+     * @returns {Object}
+     */
+    function changedFields(payload, original) {
+        return Object.fromEntries(Object.entries(payload).filter(
+            ([name, value]) => (value ?? null) !== (original[name] ?? null),
+        ));
+    }
+
+    /**
+     * Switch the modal between "create" and "edit" and reset its form.
+     * In edit mode the inputs are filled with the item's current values.
+     * @param {'create'|'edit'} mode
+     * @param {Object|null} [item]
+     */
+    function setFormMode(mode, item = null) {
+        const { form, modalTitle } = elements;
+        formState.mode = mode;
+        formState.original = item;
+
+        form.reset();
+        clearFieldErrors(form);
+        if (item) {
+            FORM_FIELDS.forEach((name) => {
+                const input = form.elements.namedItem(name);
+                if (input) input.value = item[name] ?? '';
+            });
+        }
+        modalTitle.textContent = MESSAGES.modalTitle[mode];
+        form.querySelector('button[type="submit"]').textContent = MESSAGES.submitLabel[mode];
+    }
+
+    /** Open the modal prefilled with one loaded experience. */
+    function openEditModal(id) {
+        const item = itemsById.get(id);
+        if (!item || !elements.modal) return;
+        setFormMode('edit', item);
+        elements.modal.showPopover();
+    }
+
+    /**
+     * Create: POST, then reload from page 1 so the new card shows up in
+     * its sorted place. Edit: PATCH only the changed fields, then update
+     * the card in place; reload only if the start date (the sort key)
+     * changed.
+     * @param {HTMLFormElement} form
+     */
+    async function saveForm(form) {
+        const payload = payloadFromForm(form);
+
+        if (formState.mode === 'create') {
+            await sendJson(config.listUrl, 'POST', payload);
+            showToast('Berhasil', MESSAGES.createSuccess, 'success');
+            loadPage({ reset: true });
+            return;
+        }
+
+        const { original } = formState;
+        const changes = changedFields(payload, original);
+        if (Object.keys(changes).length === 0) {
+            showToast('Info', MESSAGES.noChanges, 'normal');
+            return;
+        }
+        const updated = await sendJson(
+            urlFor(config.detailUrlTemplate, original.id), 'PATCH', changes,
+        );
+        showToast('Berhasil', MESSAGES.updateSuccess, 'success');
+        if ('started_at' in changes) {
+            loadPage({ reset: true });
+        } else {
+            replaceCard(updated);
+        }
+    }
+
     /** Wire the modal form. No-op for roles that don't get the modal. */
-    function initCreateForm() {
-        const { modal, form } = elements;
+    function initForm() {
+        const { modal, form, addButton } = elements;
         if (!modal || !form) return;
 
         const submitButton = form.querySelector('button[type="submit"]');
-        const submitLabel = submitButton.textContent;
+
+        // The "+ Tambah" button opens the popover itself; reset to create
+        // mode first so a previous edit never leaks into a new entry.
+        if (addButton) addButton.addEventListener('click', () => setFormMode('create'));
 
         // Focus the first field when the modal opens.
         modal.addEventListener('toggle', (event) => {
@@ -502,16 +616,14 @@
             submitButton.textContent = MESSAGES.saving;
 
             try {
-                await sendJson(config.listUrl, 'POST', payloadFromForm(form));
-                form.reset();
+                await saveForm(form);
                 modal.hidePopover();
-                showToast('Berhasil', MESSAGES.createSuccess, 'success');
-                loadPage({ reset: true });
+                setFormMode('create');
             } catch (error) {
                 handleSaveError(form, error);
             } finally {
                 submitButton.disabled = false;
-                submitButton.textContent = submitLabel;
+                submitButton.textContent = MESSAGES.submitLabel[formState.mode];
             }
         });
     }
@@ -543,9 +655,10 @@
         const button = event.target.closest('button[data-action]');
         if (!button || button.disabled) return;
         if (button.dataset.action === 'toggle-star') toggleStar(button);
+        if (button.dataset.action === 'edit') openEditModal(button.dataset.id);
         if (button.dataset.action === 'delete') deleteExperience(button);
     });
 
-    initCreateForm();
+    initForm();
     loadPage({ reset: true });
 })();

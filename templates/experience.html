@@ -15,7 +15,6 @@
              data-list-url="{% url 'api:experience-list' %}"
              data-detail-url-template="{% url 'api:experience-detail' '00000000-0000-0000-0000-000000000000' %}"
              data-star-url-template="{% url 'api:experience-star' '00000000-0000-0000-0000-000000000000' %}"
-             data-edit-url-template="{% url 'main:update_experience' '00000000-0000-0000-0000-000000000000' %}"
              data-login-url="{% url 'main:login' %}"
              data-is-authenticated="{{ user.is_authenticated|yesno:'true,false' }}"
              data-can-edit="{{ can_edit|yesno:'true,false' }}"
@@ -41,6 +40,7 @@
 
                     {% if can_create_or_delete %}
                         <button type="button"
+                                id="experience-add-button"
                                 class="button project-add-button"
                                 popovertarget="experience-form-modal">
                             <span aria-hidden="true">+</span>
@@ -101,7 +101,9 @@
     </section>
 </main>
 
-{% if can_create_or_delete %}
+{# One modal for both modes: owners use it to add and edit, Editors
+   only to edit. The API still enforces the rules on its own. #}
+{% if can_edit %}
     {% include "components/experience_form_modal.html" %}
 {% endif %}
 
