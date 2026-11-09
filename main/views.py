@@ -8,8 +8,7 @@ from django.core import serializers
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
-from django.db.models import Count, Q
-from django.core.paginator import Paginator
+from main.permissions import require_can_edit, require_owner
 
 from main.forms import ExperienceForm, ProjectForm
 from main.models import Experience, Project
@@ -85,9 +84,10 @@ def show_main(request):
 # Experience: list + CRUD + JSON / XML
 # ------------------------------------------------------------------
 def show_experience(request):
+    """Page shell only; experience.js loads the data from /api/v1/experiences/."""
     context = {
         "name": AUTHOR_NAME,
-        "query": request.GET.get("q", "").strip(),
+        "query": request.GET.get("title", "").strip(),
         "form": ExperienceForm(),
     }
     return render(request, "experience.html", context)
@@ -143,145 +143,6 @@ def delete_experience(request, experience_id):
         experience.delete()
         messages.success(request, "Experience berhasil dihapus!")
     return redirect("main:show_experience")
-
-
-# ------------------------------------------------------------------
-# Experience: JSON helpers (shared by the list and create endpoints)
-# ------------------------------------------------------------------
-def _iso_date(value):
-    """Return a date as 'YYYY-MM-DD', or None when empty."""
-    return value.isoformat() if value else None
-
-
-def get_experience_queryset(query=""):
-    ordering = list(Experience._meta.ordering or []) + ["-id"]
-    experiences = Experience.objects.annotate(
-        star_count=Count("starred_by", distinct=True)
-    ).order_by(*ordering)
-    if query:
-        experiences = experiences.filter(
-            Q(title__icontains=query) | Q(company__icontains=query)  # FIELD: title, company
-        )
-    return experiences
-
-
-def get_starred_experience_ids(user):
-    if not user.is_authenticated:
-        return frozenset()
-    return frozenset(user.starred_experiences.values_list("id", flat=True))
-
-
-def serialize_experience(experience, starred_ids=frozenset()):
-    return {
-        "id": experience.id,
-        # FIELD: adjust the keys below to match your Experience model.
-        "title": experience.title,
-        "company": experience.company,
-        "category": experience.category,
-        "category_display": experience.get_category_display(),
-        "description": experience.description,
-        "started_at": _iso_date(experience.started_at),
-        "ended_at": _iso_date(experience.ended_at),
-        "star_count": getattr(experience, "star_count", 0),
-        "is_starred": experience.id in starred_ids,
-    }
-
-
-EXPERIENCE_PAGE_SIZE = 5
-def _parse_page_number(raw_value):
-    try:
-        number = int(raw_value)
-    except (TypeError, ValueError):
-        return 1
-    return max(number, 1)
-
-
-def get_experience_json(request):
-    query = request.GET.get("q", "").strip()
-    page_number = _parse_page_number(request.GET.get("page"))
-
-    paginator = Paginator(get_experience_queryset(query), EXPERIENCE_PAGE_SIZE)
-    if page_number > paginator.num_pages:
-        page_items, has_next = [], False
-    else:
-        page = paginator.page(page_number)
-        page_items, has_next = page.object_list, page.has_next()
-
-    starred_ids = get_starred_experience_ids(request.user)
-    results = [serialize_experience(item, starred_ids) for item in page_items]
-
-    return JsonResponse({
-        "query": query,
-        "page": page_number,
-        "page_size": EXPERIENCE_PAGE_SIZE,
-        "total_count": paginator.count,
-        "has_next": has_next,
-        "next_page": page_number + 1 if has_next else None,
-        "count": len(results),
-        "results": results,
-    })
-
-
-@require_POST
-def create_experience_ajax(request):
-    if not can_create_or_delete(request.user):
-        return JsonResponse(
-            {
-                "success": False,
-                "message": "Hanya pemilik portofolio yang dapat menambahkan experience.",
-            },
-            status=403,
-        )
-
-    form = ExperienceForm(request.POST)
-    if not form.is_valid():
-        errors = {
-            field: [entry["message"] for entry in entries]
-            for field, entries in form.errors.get_json_data().items()
-        }
-        return JsonResponse(
-            {"success": False, "message": "Data tidak valid.", "errors": errors},
-            status=400,
-        )
-
-    experience = form.save()
-    return JsonResponse(
-        {
-            "success": True,
-            "message": "Experience berhasil ditambahkan.",
-            "item": serialize_experience(experience),
-        },
-        status=201,
-    )
-
-
-@require_POST
-def toggle_experience_star(request, experience_id):
-    """Star or unstar an experience for the current user (AJAX, JSON).
-
-    No @login_required: its redirect would be followed by fetch() and
-    hand JavaScript a 200 HTML login page. An explicit 401 JSON reply
-    is something the front-end can act on.
-    """
-    if not request.user.is_authenticated:
-        return JsonResponse(
-            {"success": False, "message": "Silakan login untuk memberi bintang."},
-            status=401,
-        )
-
-    experience = get_object_or_404(Experience, pk=experience_id)
-    if experience.starred_by.filter(pk=request.user.pk).exists():
-        experience.starred_by.remove(request.user)
-        is_starred = False
-    else:
-        experience.starred_by.add(request.user)
-        is_starred = True
-
-    return JsonResponse({
-        "success": True,
-        "is_starred": is_starred,
-        "star_count": experience.starred_by.count(),
-    })
 
 def get_experience_xml(request):
     title_query = request.GET.get("title", "").strip()

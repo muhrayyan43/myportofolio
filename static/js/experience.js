@@ -1,6 +1,11 @@
 /**
- * Experience page: AJAX list with debounced search, "load more"
- * pagination, in-place star toggle, and an add-experience modal.
+ * Experience page, backed by the DRF API at /api/v1/experiences/:
+ * paginated list with debounced search, "load more", in-place star
+ * toggle, add-experience modal, and delete.
+ *
+ * Every write (POST/PATCH/DELETE) goes through sendJson(), which sends
+ * a JSON body and the X-CSRFToken header. Server data is rendered with
+ * textContent only, never innerHTML.
  *
  * Depends on globals loaded by base.html before this deferred script
  * runs: getCookie, debounce, fetchJson (static/js/utils.js) and
@@ -13,7 +18,7 @@
     const SEARCH_DEBOUNCE_MS = 400;
     /** Placeholder id baked into the URL templates by {% url ... 0 %}. */
     const URL_ID_PLACEHOLDER = '/00000000-0000-0000-0000-000000000000/';
-    
+
     const MESSAGES = {
         emptyAll: 'Belum ada experience yang ditambahkan.',
         emptySearch: (query) => `Tidak ada hasil untuk "${query}".`,
@@ -23,6 +28,8 @@
         loadMoreFailed: 'Data berikutnya gagal dimuat. Silakan coba lagi.',
         saving: 'Menyimpan...',
         createSuccess: 'Experience berhasil ditambahkan.',
+        deleteSuccess: 'Experience berhasil dihapus.',
+        confirmDelete: (title) => `Hapus "${title}"?`,
         networkError: 'Tidak dapat terhubung ke server atau respons tidak valid. Silakan coba lagi.',
     };
 
@@ -31,10 +38,9 @@
 
     const config = {
         listUrl: root.dataset.listUrl,
-        createUrl: root.dataset.createUrl,
+        detailUrlTemplate: root.dataset.detailUrlTemplate,
         starUrlTemplate: root.dataset.starUrlTemplate,
         editUrlTemplate: root.dataset.editUrlTemplate,
-        deleteUrlTemplate: root.dataset.deleteUrlTemplate,
         loginUrl: root.dataset.loginUrl,
         isAuthenticated: root.dataset.isAuthenticated === 'true',
         canEdit: root.dataset.canEdit === 'true',
@@ -61,8 +67,7 @@
     /** Single source of truth for the list. */
     const state = {
         query: '',
-        page: 0,             // last page successfully loaded
-        hasNext: false,
+        nextUrl: null,       // DRF "next" link; null when on the last page
         isLoading: false,
         totalCount: 0,
         loadedCount: 0,
@@ -78,17 +83,30 @@
     // ------------------------------------------------------------------
 
     /**
-     * CSRF strategy: every AJAX POST on this page sends the token in the
-     * X-CSRFToken header, read from the csrftoken cookie. One mechanism
-     * covers requests with a form body (create) and without one (star).
-     * The modal form also contains {% csrf_token %} so it still works as a
-     * plain POST if JavaScript fails; Django reads that body field first
-     * and falls back to the header, and both carry the same token, so
-     * sending both is harmless.
+     * CSRF strategy: SessionAuthentication checks the CSRF token on every
+     * POST/PUT/PATCH/DELETE from a logged-in user, so each write sends it
+     * in the X-CSRFToken header, read from the csrftoken cookie.
      * @returns {Record<string, string>}
      */
     function csrfHeaders() {
         return { 'X-CSRFToken': getCookie('csrftoken') || '' };
+    }
+
+    /**
+     * Send a write request to the API.
+     * @param {string} url
+     * @param {'POST'|'PUT'|'PATCH'|'DELETE'} method
+     * @param {Object} [payload] - Sent as JSON when given.
+     * @returns {Promise<any>} Parsed response, or null for 204.
+     */
+    function sendJson(url, method, payload) {
+        const headers = csrfHeaders();
+        if (payload !== undefined) headers['Content-Type'] = 'application/json';
+        return fetchJson(url, {
+            method,
+            headers,
+            body: payload === undefined ? undefined : JSON.stringify(payload),
+        });
     }
 
     /**
@@ -150,7 +168,7 @@
 
     /** Sync the "load more" button with the current state. */
     function renderLoadMore() {
-        const visible = state.hasNext && state.loadedCount > 0;
+        const visible = Boolean(state.nextUrl) && state.loadedCount > 0;
         elements.loadMoreWrap.classList.toggle('hide', !visible);
         if (!visible) return;
 
@@ -193,28 +211,18 @@
         return button;
     }
 
-    function buildDeleteForm(item) {
-        const form = createElement('form', 'experience-delete-form');
-        form.method = 'post';
-        form.action = urlFor(config.deleteUrlTemplate, item.id);
-        form.dataset.action = 'delete';
-        form.dataset.title = item.title;
-
-        const token = document.createElement('input');
-        token.type = 'hidden';
-        token.name = 'csrfmiddlewaretoken';
-        token.value = getCookie('csrftoken') || '';
-
+    function buildDeleteButton(item) {
         const button = createElement('button', 'button button-danger button-small', 'Hapus');
-        button.type = 'submit';
-
-        form.append(token, button);
-        return form;
+        button.type = 'button';
+        button.dataset.action = 'delete';
+        button.dataset.id = item.id;
+        button.dataset.title = item.title;
+        return button;
     }
 
     /**
      * Build one experience card from a JSON item.
-     * @param {Object} item - One entry of `results` from the list endpoint.
+     * @param {Object} item - One serialized experience from the API.
      * @param {number} index - Absolute position, for the 01, 02 badge.
      * @returns {HTMLElement}
      */
@@ -225,11 +233,11 @@
         const top = createElement('div', 'project-card-top');
         top.append(
             createElement('span', 'experience-number', String(index + 1).padStart(2, '0')),
-            createElement('span', 'project-year', item.category_display),  // FIELD
+            createElement('span', 'project-year', item.category_display),
         );
 
         const endLabel = item.ended_at ? formatMonth(item.ended_at) : 'Sekarang';
-        const period = `${formatMonth(item.started_at)} – ${endLabel}`;  // FIELD
+        const period = `${formatMonth(item.started_at)} – ${endLabel}`;
 
         const actions = createElement('div', 'card-actions');
         actions.append(buildStarButton(item));
@@ -239,13 +247,12 @@
             actions.append(editLink);
         }
         if (config.canDelete) {
-            actions.append(buildDeleteForm(item));
+            actions.append(buildDeleteButton(item));
         }
 
         card.append(
             top,
             createElement('h2', 'project-title', item.title),
-            createElement('p', 'project-tech', item.company),  // FIELD
             createElement('p', 'experience-period', period),
             createElement('p', 'project-description', item.description),
             actions,
@@ -268,39 +275,44 @@
     // Data loading
     // ------------------------------------------------------------------
 
+    /** First-page URL for the current search: /api/v1/experiences/?title=... */
+    function firstPageUrl() {
+        const url = new URL(config.listUrl, window.location.origin);
+        if (state.query) url.searchParams.set('title', state.query);
+        return url;
+    }
+
     /**
      * Load one page of experiences.
      *
      * reset=true starts over at page 1 (initial load, new search, after a
-     * successful create) and replaces the list. reset=false appends the
-     * next page. Each call gets a request id; a reply that arrives after a
-     * newer request started is ignored, and the network request itself is
-     * aborted, so a slow old response can never overwrite fresher results.
+     * create or delete) and replaces the list. reset=false follows the
+     * DRF "next" link and appends. Each call gets a request id; a reply
+     * that arrives after a newer request started is ignored, and the
+     * network request itself is aborted, so a slow old response can never
+     * overwrite fresher results.
      *
      * @param {{reset: boolean}} options
      */
     async function loadPage({ reset }) {
-        if (!reset && (state.isLoading || !state.hasNext)) return;
+        if (!reset && (state.isLoading || !state.nextUrl)) return;
 
         if (activeController) activeController.abort();
         const controller = new AbortController();
         activeController = controller;
         const requestId = ++state.requestId;
-        const pageToLoad = reset ? 1 : state.page + 1;
 
         state.isLoading = true;
         state.loadMoreFailed = false;
         if (reset) {
             state.query = currentQuery();
-            state.hasNext = false;
+            state.nextUrl = null;
             state.loadedCount = 0;
             showState('loading');
         }
         renderLoadMore();
 
-        const url = new URL(config.listUrl, window.location.origin);
-        if (state.query) url.searchParams.set('q', state.query);
-        url.searchParams.set('page', String(pageToLoad));
+        const url = reset ? firstPageUrl() : state.nextUrl;
 
         try {
             const data = await fetchJson(url, { signal: controller.signal });
@@ -310,10 +322,9 @@
             if (reset) elements.list.replaceChildren();
             appendCards(results, state.loadedCount);
 
-            state.page = pageToLoad;
             state.loadedCount += results.length;
-            state.totalCount = Number(data.total_count) || 0;
-            state.hasNext = Boolean(data.has_next);
+            state.totalCount = Number(data.count) || 0;
+            state.nextUrl = data.next || null;
             elements.count.textContent = String(state.totalCount).padStart(2, '0');
 
             if (state.loadedCount === 0) {
@@ -360,14 +371,34 @@
 
         button.disabled = true;
         try {
-            const data = await fetchJson(urlFor(config.starUrlTemplate, button.dataset.id), {
-                method: 'POST',
-                headers: csrfHeaders(),
-            });
+            const data = await sendJson(urlFor(config.starUrlTemplate, button.dataset.id), 'POST');
             applyStarState(button, data.is_starred, data.star_count);
         } catch (error) {
             showToast('Gagal memberi bintang', error.message, 'error');
         } finally {
+            button.disabled = false;
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Delete (owner only; the API answers 403 for everyone else)
+    // ------------------------------------------------------------------
+
+    /**
+     * DELETE one experience, then reload the list so numbering, the
+     * counter and pagination stay consistent.
+     * @param {HTMLButtonElement} button
+     */
+    async function deleteExperience(button) {
+        if (!window.confirm(MESSAGES.confirmDelete(button.dataset.title))) return;
+
+        button.disabled = true;
+        try {
+            await sendJson(urlFor(config.detailUrlTemplate, button.dataset.id), 'DELETE');
+            showToast('Berhasil', MESSAGES.deleteSuccess, 'success');
+            loadPage({ reset: true });
+        } catch (error) {
+            showToast('Gagal menghapus', error.message, 'error');
             button.disabled = false;
         }
     }
@@ -387,8 +418,9 @@
     }
 
     /**
-     * Show server validation errors under their inputs. Errors for fields
-     * without a slot (e.g. "__all__") go to the general error line.
+     * Show DRF validation errors ({"title": ["..."]}) under their inputs.
+     * Errors for fields without a slot (e.g. "non_field_errors") go to
+     * the general error line.
      * @param {HTMLFormElement} form
      * @param {Record<string, string[]>} errors
      */
@@ -408,18 +440,39 @@
     }
 
     function flattenErrors(errors) {
-        return Object.values(errors).flat().join(' ');
+        return Object.values(errors).flat()
+            .filter((message) => typeof message === 'string')
+            .join(' ');
+    }
+
+    /** Fields sent to the API; optional ones become null when left blank. */
+    const FORM_FIELDS = ['title', 'description', 'category', 'thumbnail', 'started_at', 'ended_at'];
+    const NULLABLE_FIELDS = new Set(['thumbnail', 'ended_at']);
+
+    /**
+     * Read the modal form into a JSON payload. Fields are listed
+     * explicitly so the csrfmiddlewaretoken input is never sent as data.
+     * @param {HTMLFormElement} form
+     * @returns {Object}
+     */
+    function payloadFromForm(form) {
+        const data = new FormData(form);
+        return Object.fromEntries(FORM_FIELDS.map((name) => {
+            const value = String(data.get(name) ?? '');
+            return [name, NULLABLE_FIELDS.has(name) && !value.trim() ? null : value];
+        }));
     }
 
     /**
-     * Map a failed create request to the right feedback.
+     * Map a failed save request to the right feedback: 400 shows field
+     * errors plus a toast, 403 shows the permission message from the API.
      * @param {HTMLFormElement} form
      * @param {Error & {status?: number, data?: any}} error
      */
-    function handleCreateError(form, error) {
-        if (error.status === 400 && error.data && error.data.errors) {
-            showFieldErrors(form, error.data.errors);
-            showToast('Gagal menyimpan', flattenErrors(error.data.errors), 'error');
+    function handleSaveError(form, error) {
+        if (error.status === 400 && error.data && typeof error.data === 'object') {
+            showFieldErrors(form, error.data);
+            showToast('Gagal menyimpan', flattenErrors(error.data), 'error');
         } else if (error.status === 403) {
             showToast('Akses ditolak', error.message, 'error');
         } else {
@@ -449,17 +502,13 @@
             submitButton.textContent = MESSAGES.saving;
 
             try {
-                const data = await fetchJson(config.createUrl, {
-                    method: 'POST',
-                    headers: csrfHeaders(),
-                    body: new FormData(form),
-                });
+                await sendJson(config.listUrl, 'POST', payloadFromForm(form));
                 form.reset();
                 modal.hidePopover();
-                showToast('Berhasil', data.message || MESSAGES.createSuccess, 'success');
+                showToast('Berhasil', MESSAGES.createSuccess, 'success');
                 loadPage({ reset: true });
             } catch (error) {
-                handleCreateError(form, error);
+                handleSaveError(form, error);
             } finally {
                 submitButton.disabled = false;
                 submitButton.textContent = submitLabel;
@@ -491,15 +540,10 @@
     // Cards are rebuilt on each load, so listen on the container
     // (event delegation) instead of on every button.
     elements.list.addEventListener('click', (event) => {
-        const starButton = event.target.closest('[data-action="toggle-star"]');
-        if (starButton) toggleStar(starButton);
-    });
-
-    elements.list.addEventListener('submit', (event) => {
-        const deleteForm = event.target.closest('form[data-action="delete"]');
-        if (deleteForm && !window.confirm(`Hapus "${deleteForm.dataset.title}"?`)) {
-            event.preventDefault();
-        }
+        const button = event.target.closest('button[data-action]');
+        if (!button || button.disabled) return;
+        if (button.dataset.action === 'toggle-star') toggleStar(button);
+        if (button.dataset.action === 'delete') deleteExperience(button);
     });
 
     initCreateForm();

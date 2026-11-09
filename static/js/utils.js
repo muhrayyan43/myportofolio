@@ -81,6 +81,7 @@ async function fetchJson(url, options = {}) {
         headers: { Accept: 'application/json', ...headers },
     });
 
+    if (response.status === 204) return null;
     const raw = await response.text();
     let data = null;
     if (raw) {
@@ -93,7 +94,8 @@ async function fetchJson(url, options = {}) {
 
     if (!response.ok) {
         const error = new Error(
-            (data && data.message) || `Permintaan gagal (status ${response.status}).`
+            (data && (data.message || data.detail))
+                || `Permintaan gagal (status ${response.status}).`
         );
         error.status = response.status;
         error.data = data;

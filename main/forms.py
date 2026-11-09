@@ -121,11 +121,11 @@ class ExperienceForm(ModelForm):
             )
         return value
 
-    def clean_title(self):  # FIELD: title
+    def clean_title(self):
         return self._clean_text("title", "Posisi")
 
-    def clean_company(self):  # FIELD: company
-        return self._clean_text("company", "Perusahaan")
+    def clean_description(self):
+        return self._clean_text("description", "Deskripsi")
 
     def clean_description(self):  # FIELD: description
         return self._clean_text("description", "Deskripsi")

@@ -9,10 +9,8 @@ from main.views import (
     # experience
     show_experience,
     create_experience,
-    create_experience_ajax,
     update_experience,
     delete_experience,
-    get_experience_json,
     get_experience_xml,
     # project
     show_project,
@@ -24,7 +22,6 @@ from main.views import (
     show_starred_projects,
     get_project_json,
     get_project_xml,
-    toggle_experience_star,
 )
 
 
@@ -51,18 +48,6 @@ urlpatterns = [
         "experience/<uuid:experience_id>/delete/",
         delete_experience,
         name="delete_experience",
-    ),
-    path("api/experience/", get_experience_json, name="get_experience_json"),
-    path("api/experience/xml/", get_experience_xml, name="get_experience_xml"),
-    path(
-        "experience/<uuid:experience_id>/star/",
-        toggle_experience_star,
-        name="toggle_experience_star",
-    ),
-    path(
-        "experience/add-ajax/",
-        create_experience_ajax,
-        name="create_experience_ajax",
     ),
 
     # Project

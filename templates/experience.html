@@ -12,18 +12,18 @@
     <section class="project-section"
              id="experience-app"
              aria-busy="true"
-             data-list-url="{% url 'main:get_experience_json' %}"
-             data-create-url="{% url 'main:create_experience_ajax' %}"
-             data-star-url-template="{% url 'main:toggle_experience_star' '00000000-0000-0000-0000-000000000000' %}"
+             data-list-url="{% url 'api:experience-list' %}"
+             data-detail-url-template="{% url 'api:experience-detail' '00000000-0000-0000-0000-000000000000' %}"
+             data-star-url-template="{% url 'api:experience-star' '00000000-0000-0000-0000-000000000000' %}"
              data-edit-url-template="{% url 'main:update_experience' '00000000-0000-0000-0000-000000000000' %}"
-             data-delete-url-template="{% url 'main:delete_experience' '00000000-0000-0000-0000-000000000000' %}"
              data-login-url="{% url 'main:login' %}"
              data-is-authenticated="{{ user.is_authenticated|yesno:'true,false' }}"
              data-can-edit="{{ can_edit|yesno:'true,false' }}"
              data-can-delete="{{ can_create_or_delete|yesno:'true,false' }}">
 
         {# Rendering the token makes Django set the csrftoken cookie that
-           getCookie() reads for every AJAX POST on this page. #}
+           getCookie() reads for every POST/PATCH/DELETE sent to the API,
+           including the star button used by Members and Editors. #}
         {% csrf_token %}
 
         <div class="container">
@@ -58,7 +58,7 @@
             <form id="experience-search-form" class="project-search" role="search">
                 <input type="search"
                        id="experience-search-input"
-                       name="q"
+                       name="title"
                        value="{{ query }}"
                        placeholder="Cari berdasarkan posisi atau perusahaan"
                        class="project-search__input"

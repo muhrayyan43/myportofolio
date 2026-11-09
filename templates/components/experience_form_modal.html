@@ -1,7 +1,7 @@
 {# Add-experience modal (Popover API). Reuses the .project-form-modal
    styles from Tutorial 05. The form's action points to the regular
    create_experience view as a no-JavaScript fallback; experience.js
-   intercepts the submit and posts to create_experience_ajax instead. #}
+   intercepts the submit and sends JSON to POST /api/v1/experiences/. #}
 
 <div id="experience-form-modal"
      class="project-form-modal"
