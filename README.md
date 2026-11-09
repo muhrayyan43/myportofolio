@@ -172,3 +172,48 @@ tapi saya tidak jadi menggunakannya.
 - **Tools:** Claude (Anthropic). 
 - **Strategi prompting:** Saya menulis prompt terstruktur berisi peran, konteks proyek, aturan kerja, rincian tiap commit, standar kualitas, dan permintaan tabel verifikasi akhir. 
 - **Bagian yang dibantu AI:** `static/js/utils.js`, `static/js/experience.js`, view JSON dan AJAX di `main/views.py`, `clean_*` di `ExperienceForm`, template dan modal Experience, CSS tambahan, serta draft README ini.
+
+
+### Tugas 6
+
+**Bagian yang dikerjakan:** Experience, dengan model dan data yang sudah ada sejak Tugas 3. API-nya ada di `/api/v1/experiences/`, di samping API Projects dari Tutorial 07.
+
+| Method | Endpoint | Visitor | Member | Editor | Owner |
+|---|---|:-:|:-:|:-:|:-:|
+| `GET` | `/api/v1/experiences/?title=...&page=...` | ✓ | ✓ | ✓ | ✓ |
+| `POST` | `/api/v1/experiences/` | 403 | 403 | 403 | 201 |
+| `GET` | `/api/v1/experiences/<uuid>/` | ✓ | ✓ | ✓ | ✓ |
+| `PUT` / `PATCH` | `/api/v1/experiences/<uuid>/` | 403 | 403 | 200 | 200 |
+| `DELETE` | `/api/v1/experiences/<uuid>/` | 403 | 403 | 403 | 204 |
+| `POST` | `/api/v1/experiences/<uuid>/star/` | 403 | 200 | 200 | 200 |
+
+**Ringkasan perubahan:**
+- `ExperienceSerializer` dengan `fields` eksplisit, `star_count`/`is_starred` read-only, `validate_title`/`validate_description` memakai `strip_tags`, dan `validate()` untuk memastikan tanggal selesai tidak mendahului tanggal mulai (termasuk saat `PATCH` sebagian).
+- `IsPortfolioOwnerOrEditorOrReadOnly` memakai helper `is_owner`/`is_editor` yang sama dengan view HTML, jadi aturan peran hanya didefinisikan sekali.
+- Daftar memakai `PageNumberPagination` (5 per halaman) supaya tombol "Muat lebih banyak" dari Tugas 5 tetap ada; frontend tinggal mengikuti link `next`. Jumlah star dan status star dihitung dengan `annotate(Count(...), Exists(...))` sehingga satu halaman cukup satu query, bukan satu query per kartu.
+- Halaman Experience sekarang menampilkan, mencari, menambah, mengedit (`PATCH` hanya field yang berubah, lewat modal yang sama dengan tambah), memberi star, dan menghapus lewat API tanpa reload. Error `400` muncul di bawah input dan di toast, `403` di toast.
+- Endpoint JSON lama (`/api/experience/`, `/experience/add-ajax/`, `/experience/<id>/star/`) dihapus supaya hanya ada satu jalur. Ini sekaligus memperbaiki bug Tugas 5: kode lama memakai field `company` yang tidak ada di model, sehingga daftar Experience selalu gagal dimuat.
+- Empat test lama di `main/tests.py` disesuaikan karena halaman Projects sudah dirender lewat JavaScript; isinya sekarang dicek lewat API.
+
+**Menjalankan:**
+```bash
+python -m pip install -r requirements.txt
+python manage.py migrate
+python manage.py test main      # bukan "test" saja, supaya test_e2e.py (Selenium) tidak ikut
+python manage.py runserver      # lalu buka /experience/ dan /api/v1/experiences/
+```
+
+1. **REST** (*Representational State Transfer*) adalah gaya arsitektur untuk merancang API, bukan format data atau library. Data diperlakukan sebagai *resource* yang punya alamat (`/api/v1/experiences/` untuk kumpulan, `/api/v1/experiences/<uuid>/` untuk satu item), HTTP method menyatakan tindakannya (`GET` membaca, `POST` membuat, `PUT`/`PATCH` mengubah, `DELETE` menghapus), dan klien serta server bertukar *representasi* data. Mengembalikan JSON saja belum cukup. Endpoint seperti `POST /experience/add-ajax/` atau `POST /project/5/delete/` memang membalas JSON, tetapi tindakannya ditulis di URL dan semuanya memakai `POST`, jadi method dan status code tidak punya arti yang konsisten. API yang RESTful juga memakai status code yang tepat (`201`, `204`, `400`, `403`, `404`) dan idealnya stateless. Proyek saya tidak sepenuhnya stateless karena memakai session, dan itu wajar untuk AJAX di website yang sama.
+
+   **PUT** mengganti seluruh representasi resource, jadi semua field wajib harus dikirim; `PUT` yang hanya berisi `title` dibalas `400`. **PATCH** hanya mengirim field yang ingin diubah, dan field lain tetap (`partial=True` di serializer). `PUT` cocok ketika klien memang memegang data lengkap, misalnya form edit penuh atau sinkronisasi data dari sistem lain. `PATCH` cocok untuk perubahan kecil, misalnya Editor hanya membetulkan judul. Modal edit saya memakai `PATCH` dan hanya mengirim field yang berubah, sehingga perubahan orang lain pada field lain tidak ikut tertimpa.
+
+2. **Serializer** adalah kontrak antara model dan JSON yang bekerja dua arah. Saat membaca, serializer mengubah objek `Experience` menjadi data Python yang siap dirender ke JSON. Saat menulis, serializer menerima `request.data`, memvalidasinya per field (`validate_title`) dan lintas field (`validate`), lalu `save()` memanggil `create()` atau `update()`. Dibandingkan merakit dictionary manual dengan `JsonResponse`, keuntungannya: (a) satu definisi `fields` dipakai untuk list, detail, create, dan update, sehingga tidak ada dictionary yang tertinggal saat model berubah (bug `company` di Tugas 5 terjadi persis karena dictionary manual tidak ikut berubah); (b) validasi tipe, `choices`, `URLField`, dan `required` otomatis diambil dari model; (c) error `400` keluar dalam bentuk seragam `{"field": ["pesan"]}`; (d) `read_only_fields` dan `SerializerMethodField` membuat field seperti `id` dan `star_count` tidak bisa dipalsukan klien; (e) Browsable API ikut tersedia.
+
+3. **Autentikasi** menjawab "siapa kamu": `SessionAuthentication` membaca cookie session lalu mengisi `request.user`. **Otorisasi** menjawab "boleh melakukan apa": permission class seperti `IsPortfolioOwnerOrEditorOrReadOnly` memutuskan apakah request boleh diteruskan, dan dijalankan sebelum isi view. Menyembunyikan tombol di template hanya mengatur tampilan. Siapa pun tetap bisa mengirim request langsung lewat `fetch()` di Console, `curl`, atau Browsable API tanpa pernah melihat tombolnya. Karena itu aturan harus ditegakkan di server. Saya membuktikannya dengan test: Member yang mengirim `PATCH` mendapat `403`, dan isi database dicek tetap sama. Saat permission saya ubah sementara supaya semua akun login boleh menulis, test itu gagal.
+
+4. Dengan `SessionAuthentication`, browser **otomatis** mengirim cookie session ke domain kita, termasuk ketika request dipicu oleh situs lain (misalnya form tersembunyi di situs jahat yang mengirim `DELETE` atau `POST` ke portofolio saya). Cookie saja tidak bisa membedakan request asli dari request palsu. Token CSRF bisa membedakannya karena situs lain tidak dapat membaca token itu dari halaman atau cookie kita. Karena itu DRF memeriksa CSRF untuk setiap `POST`/`PUT`/`PATCH`/`DELETE` dari pengguna yang login lewat session, dan frontend saya selalu mengirim header `X-CSRFToken`. `force_authenticate` melewati seluruh proses autentikasi: user langsung "ditempelkan" ke request tanpa session dan tanpa pemeriksaan CSRF, sehingga test yang memakainya akan lulus walaupun perlindungan CSRF rusak. Untuk membuktikan CSRF berjalan, test saya memakai `APIClient(enforce_csrf_checks=True)` dan `.login()` agar ada session sungguhan. `PATCH` dan star tanpa token ditolak `403` (database dicek tidak berubah), sedangkan `PATCH` dengan token dari cookie halaman Experience berhasil.
+
+## AI Disclosure
+
+- **Bagian yang dibantu AI:** `ExperienceSerializer`, `IsPortfolioOwnerOrEditorOrReadOnly`, dan draft README ini.
+- **Keterbatasan AI dan hal yang saya periksa:** Claude menemukan bahwa kode Tugas 5 (yang juga dibuat dengan bantuan AI) memakai field `company` yang tidak pernah ada di model. Bug ini lolos karena tidak ada test untuk endpoint JSON Experience. 
