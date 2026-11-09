@@ -57,3 +57,22 @@ class IsPortfolioOwnerOrReadOnly(BasePermission):
 
     def has_permission(self, request, view):
         return request.method in SAFE_METHODS or request.user.is_superuser
+
+class IsPortfolioOwnerOrEditorOrReadOnly(BasePermission):
+    """Role rules from Tugas 4, enforced on the API.
+    Reuses is_owner/is_editor so the API and the HTML views share one
+    definition of each role.
+    """
+
+    message = (
+        "Hanya pemilik portofolio yang dapat menambah atau menghapus data; "
+        "Editor hanya dapat mengubah data."
+    )
+
+    def has_permission(self, request, view):
+        if request.method in SAFE_METHODS:
+            return True
+        user = request.user
+        if is_owner(user):
+            return True
+        return request.method in ("PUT", "PATCH") and is_editor(user)
