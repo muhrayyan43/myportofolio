@@ -498,7 +498,8 @@
 
     /**
      * Map a failed save request to the right feedback: 400 shows field
-     * errors plus a toast, 403 shows the permission message from the API.
+     * errors plus a toast, 401/403 show the API's message (401 when the
+     * session has expired, 403 when the role is not allowed).
      * @param {HTMLFormElement} form
      * @param {Error & {status?: number, data?: any}} error
      */
@@ -506,7 +507,7 @@
         if (error.status === 400 && error.data && typeof error.data === 'object') {
             showFieldErrors(form, error.data);
             showToast('Gagal menyimpan', flattenErrors(error.data), 'error');
-        } else if (error.status === 403) {
+        } else if (error.status === 401 || error.status === 403) {
             showToast('Akses ditolak', error.message, 'error');
         } else {
             showToast('Gagal menyimpan', MESSAGES.networkError, 'error');

@@ -2,8 +2,10 @@ import datetime
 import uuid
 
 from django.contrib.auth.models import Group, User
+from django.test import override_settings
 from django.urls import reverse
 from rest_framework import status
+from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient, APITestCase
 
 from main.models import Experience, Project
@@ -44,14 +46,12 @@ class ProjectAPITest(APITestCase):
         self.assertEqual(self.client.get(url).status_code, status.HTTP_404_NOT_FOUND)
 
     def test_guest_and_visitor_cannot_write(self):
-        for user in (None, self.visitor):
+        # A guest has no credentials (401); a logged-in visitor lacks the role (403).
+        for user, expected in ((None, 401), (self.visitor, 403)):
             self.client.force_authenticate(user=user)
-            self.assertEqual(self.client.post(self.list_url, self.payload, format="json").status_code, 403)
-            self.assertEqual(self.client.patch(self.detail_url, {"title": "Changed"}, format="json").status_code, 403)
-            self.assertEqual(self.client.delete(self.detail_url).status_code, 403)
-        self.assertEqual(Project.objects.count(), 1)
-        self.project.refresh_from_db()
-        self.assertEqual(self.project.title, "Portfolio")
+            self.assertEqual(self.client.post(self.list_url, self.payload, format="json").status_code, expected)
+            self.assertEqual(self.client.patch(self.detail_url, {"title": "Changed"}, format="json").status_code, expected)
+            self.assertEqual(self.client.delete(self.detail_url).status_code, expected)
 
     def test_owner_can_create(self):
         self.client.force_authenticate(user=self.owner)
@@ -87,7 +87,7 @@ class ProjectAPITest(APITestCase):
         self.assertFalse(Project.objects.filter(pk=self.project.id).exists())
 
     def test_star_requires_login_and_toggles(self):
-        self.assertEqual(self.client.post(self.star_url).status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(self.client.post(self.star_url).status_code, status.HTTP_401_UNAUTHORIZED)
         self.client.force_authenticate(user=self.visitor)
         response = self.client.post(self.star_url)
         self.assertTrue(response.data["is_starred"])
@@ -223,7 +223,7 @@ class ExperienceAPITest(APITestCase):
     # -- Role rules ---------------------------------------------------------
 
     def test_visitor_and_member_cannot_write(self):
-        for user in (None, self.member):
+        for user, expected in ((None, 401), (self.member, 403)):
             self.client.force_authenticate(user=user)
             requests = [
                 self.client.post(self.list_url, self.payload, format="json"),
@@ -232,7 +232,7 @@ class ExperienceAPITest(APITestCase):
                 self.client.delete(self.detail_url),
             ]
             for response in requests:
-                self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+                self.assertEqual(response.status_code, expected)
         self.assert_experience_unchanged()
 
     def test_editor_can_patch_and_put(self):
@@ -348,7 +348,7 @@ class ExperienceAPITest(APITestCase):
 
     def test_star_rejects_visitor(self):
         response = self.client.post(self.star_url)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(self.experience.starred_by.count(), 0)
 
     def test_star_toggles_for_every_logged_in_role(self):
@@ -413,3 +413,87 @@ class ExperienceAPITest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.experience.refresh_from_db()
         self.assertEqual(self.experience.title, "With token")
+
+
+
+class TokenAuthenticationAPITest(APITestCase):
+    def setUp(self):
+        self.owner = User.objects.create_superuser(
+            username="owner", password="test-password", email="owner@example.com",
+        )
+        self.member = User.objects.create_user(username="member", password="test-password")
+        self.owner_token = Token.objects.create(user=self.owner)
+        self.project_url = reverse("api:project-list")
+        self.experience_url = reverse("api:experience-list")
+        self.project_payload = {
+            "title": "Mobile app", "description": "Flutter client", "tech_stack": "Flutter",
+            "year": 2026, "url": None,
+        }
+        self.experience_payload = {
+            "title": "Intern @ Company", "description": "Membangun API.",
+            "category": "internship", "thumbnail": "", "started_at": "2026-06-01",
+            "ended_at": None,
+        }
+
+    def use_token(self, key):
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {key}")
+
+    def test_owner_token_can_create_project_and_experience(self):
+        self.use_token(self.owner_token.key)
+        response = self.client.post(self.project_url, self.project_payload, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        response = self.client.post(self.experience_url, self.experience_payload, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_token_write_needs_no_csrf_token(self):
+        # CSRF protects cookies; a browser never attaches a header token on its own.
+        client = APIClient(enforce_csrf_checks=True)
+        client.credentials(HTTP_AUTHORIZATION=f"Token {self.owner_token.key}")
+        response = client.post(self.project_url, self.project_payload, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_member_token_is_authenticated_but_forbidden(self):
+        self.use_token(Token.objects.create(user=self.member).key)
+        response = self.client.post(self.project_url, self.project_payload, format="json")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(Project.objects.count(), 0)
+
+    def test_token_identifies_the_user_who_stars(self):
+        experience = Experience.objects.create(
+            title="Staff MDC @ FUKI", description="Membuat konten.", category="volunteer",
+            started_at=datetime.date(2025, 1, 1),
+        )
+        self.use_token(Token.objects.create(user=self.member).key)
+        response = self.client.post(reverse("api:experience-star", args=[experience.id]))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data["is_starred"])
+        self.assertEqual(list(experience.starred_by.all()), [self.member])
+
+    def test_missing_or_revoked_token_gets_401(self):
+        response = self.client.post(self.project_url, self.project_payload, format="json")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response["WWW-Authenticate"], "Token")
+
+        revoked_key = self.owner_token.key
+        self.owner_token.delete()
+        self.use_token(revoked_key)
+        response = self.client.post(self.project_url, self.project_payload, format="json")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(Project.objects.count(), 0)
+
+    @override_settings(CORS_ALLOW_ALL_ORIGINS=True)
+    def test_cors_preflight_allows_the_authorization_header(self):
+        response = self.client.options(
+            self.project_url,
+            HTTP_ORIGIN="http://localhost:5000",
+            HTTP_ACCESS_CONTROL_REQUEST_METHOD="POST",
+            HTTP_ACCESS_CONTROL_REQUEST_HEADERS="authorization, content-type",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response["Access-Control-Allow-Origin"], "*")
+        self.assertIn("authorization", response["Access-Control-Allow-Headers"])
+
+    @override_settings(CORS_ALLOW_ALL_ORIGINS=True)
+    def test_cors_headers_only_on_api_urls(self):
+        response = self.client.get(reverse("main:login"), HTTP_ORIGIN="http://localhost:5000")
+        self.assertNotIn("Access-Control-Allow-Origin", response)

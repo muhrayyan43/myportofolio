@@ -1,7 +1,7 @@
 from django.db.models import Count, Exists, OuterRef
 from django.shortcuts import get_object_or_404
 from rest_framework import status
-from rest_framework.authentication import SessionAuthentication
+from rest_framework.authentication import SessionAuthentication, TokenAuthentication
 from rest_framework.decorators import (
     api_view, authentication_classes, permission_classes,
 )
@@ -15,9 +15,10 @@ from main.permissions import (
 )
 from main.serializers import ExperienceSerializer, ProjectSerializer
 
+API_AUTHENTICATION_CLASSES = [TokenAuthentication, SessionAuthentication]
 
 @api_view(["GET", "HEAD", "POST"])
-@authentication_classes([SessionAuthentication])
+@authentication_classes(API_AUTHENTICATION_CLASSES)
 @permission_classes([IsPortfolioOwnerOrReadOnly])
 def project_list(request):
     """GET: list projects (optional ?title= search). POST: create (owner only)."""
@@ -38,7 +39,7 @@ def project_list(request):
 
 
 @api_view(["GET", "HEAD", "PUT", "PATCH", "DELETE"])
-@authentication_classes([SessionAuthentication])
+@authentication_classes(API_AUTHENTICATION_CLASSES)
 @permission_classes([IsPortfolioOwnerOrReadOnly])
 def project_detail(request, project_id):
     """Read one project; PUT/PATCH/DELETE are owner only."""
@@ -63,7 +64,7 @@ def project_detail(request, project_id):
 
 
 @api_view(["POST"])
-@authentication_classes([SessionAuthentication])
+@authentication_classes(API_AUTHENTICATION_CLASSES)
 @permission_classes([IsAuthenticated])
 def project_star(request, project_id):
     """Toggle the current user's star and return the updated project."""
@@ -95,7 +96,7 @@ def experience_queryset(user):
 
 
 @api_view(["GET", "HEAD", "POST"])
-@authentication_classes([SessionAuthentication])
+@authentication_classes(API_AUTHENTICATION_CLASSES)
 @permission_classes([IsPortfolioOwnerOrEditorOrReadOnly])
 def experience_list(request):
     """GET: paginated list (optional ?title= search). POST: create (owner only)."""
@@ -118,7 +119,7 @@ def experience_list(request):
 
 
 @api_view(["GET", "HEAD", "PUT", "PATCH", "DELETE"])
-@authentication_classes([SessionAuthentication])
+@authentication_classes(API_AUTHENTICATION_CLASSES)
 @permission_classes([IsPortfolioOwnerOrEditorOrReadOnly])
 def experience_detail(request, experience_id):
     """Read one experience; PUT/PATCH for Editor and owner, DELETE owner only."""
@@ -143,7 +144,7 @@ def experience_detail(request, experience_id):
 
 
 @api_view(["POST"])
-@authentication_classes([SessionAuthentication])
+@authentication_classes(API_AUTHENTICATION_CLASSES)
 @permission_classes([IsAuthenticated])
 def experience_star(request, experience_id):
     """Toggle the current user's star and return the updated experience.

@@ -30,7 +30,12 @@ PRODUCTION = os.getenv('PRODUCTION', 'False').lower() == 'true'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "muhammad-rayyan43-myportofolio.pws.cs.ui.ac.id"]
+ALLOWED_HOSTS = [
+    "localhost",
+    "127.0.0.1",
+    "10.0.2.2",
+    "muhammad-rayyan43-myportofolio.pws.cs.ui.ac.id",
+]
 
 CSRF_TRUSTED_ORIGINS = [
     "https://muhammad-rayyan43-myportofolio.pws.cs.ui.ac.id",
@@ -46,12 +51,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
     'main',
     'rest_framework',
+    'rest_framework.authtoken',
     'contacts',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -156,3 +164,13 @@ MAILERS = {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     },
 }
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+}
+
+CORS_ALLOW_ALL_ORIGINS = os.getenv('CORS_ALLOW_ALL_ORIGINS', 'True').lower() == 'true'
+CORS_URLS_REGEX = r'^/api/.*$'
