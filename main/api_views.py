@@ -158,3 +158,13 @@ def experience_star(request, experience_id):
         experience.starred_by.add(request.user)
     serializer = ExperienceSerializer(experience, context={"request": request})
     return Response(serializer.data)
+
+@api_view(["POST"])
+@authentication_classes(API_AUTHENTICATION_CLASSES)
+@permission_classes([IsAuthenticated])
+def api_logout(request):
+    """Revoke the caller's token (Tutorial 10) and answer 204 No Content.
+    """
+    if request.auth is not None:
+        request.auth.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)

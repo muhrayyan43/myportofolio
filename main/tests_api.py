@@ -497,3 +497,97 @@ class TokenAuthenticationAPITest(APITestCase):
     def test_cors_headers_only_on_api_urls(self):
         response = self.client.get(reverse("main:login"), HTTP_ORIGIN="http://localhost:5000")
         self.assertNotIn("Access-Control-Allow-Origin", response)
+
+
+
+class TokenLoginLogoutAPITest(APITestCase):
+    """Tutorial 10: POST /api/v1/auth/token/ and POST /api/v1/auth/logout/."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(username="member", password="test-password")
+        self.token_url = reverse("api:auth-token")
+        self.logout_url = reverse("api:auth-logout")
+
+    def post_login(self, password="test-password", client=None):
+        client = client or self.client
+        return client.post(
+            self.token_url, {"username": "member", "password": password}, format="json",
+        )
+
+    def test_login_returns_the_users_token(self):
+        response = self.post_login()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, {"token": Token.objects.get(user=self.user).key})
+
+    def test_logging_in_again_reuses_the_token(self):
+        first = self.post_login().data["token"]
+        second = self.post_login().data["token"]
+        self.assertEqual(first, second)
+        self.assertEqual(Token.objects.count(), 1)
+
+    def test_login_rejects_bad_credentials(self):
+        response = self.post_login(password="wrong-password")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("non_field_errors", response.data)
+        response = self.client.post(self.token_url, {}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        for field in ("username", "password"):
+            self.assertIn(field, response.data)
+        self.assertEqual(Token.objects.count(), 0)
+
+    def test_login_needs_no_csrf_token(self):
+        # The mobile app never has a CSRF cookie, so login must work without one.
+        response = self.post_login(client=APIClient(enforce_csrf_checks=True))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_logout_revokes_only_the_callers_token(self):
+        other = User.objects.create_user(username="other", password="test-password")
+        other_token = Token.objects.create(user=other)
+        token = Token.objects.create(user=self.user)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {token.key}")
+
+        response = self.client.post(self.logout_url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(response.content, b"")
+        self.assertFalse(Token.objects.filter(pk=token.pk).exists())
+        self.assertTrue(Token.objects.filter(pk=other_token.pk).exists())
+
+        # The revoked token no longer works.
+        response = self.client.post(self.logout_url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_logout_requires_authentication(self):
+        response = self.client.post(self.logout_url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_logout_only_accepts_post(self):
+        token = Token.objects.create(user=self.user)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {token.key}")
+        response = self.client.get(self.logout_url)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+        self.assertTrue(Token.objects.filter(pk=token.pk).exists())
+
+    def test_mobile_flow_login_write_logout(self):
+        User.objects.create_superuser(
+            username="owner", password="test-password", email="owner@example.com",
+        )
+        response = self.client.post(
+            self.token_url, {"username": "owner", "password": "test-password"}, format="json",
+        )
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {response.data['token']}")
+        payload = {
+            "title": "Mobile app", "description": "Flutter client",
+            "tech_stack": "Flutter", "year": 2026,
+        }
+        project_url = reverse("api:project-list")
+
+        self.assertEqual(
+            self.client.post(project_url, payload, format="json").status_code,
+            status.HTTP_201_CREATED,
+        )
+        self.assertEqual(self.client.post(self.logout_url).status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(
+            self.client.post(project_url, payload, format="json").status_code,
+            status.HTTP_401_UNAUTHORIZED,
+        )
+        self.assertEqual(Project.objects.count(), 1)
