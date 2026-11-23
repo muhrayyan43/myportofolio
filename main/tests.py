@@ -124,3 +124,15 @@ class ExperiencePageTest(TestCase):
         create_url = reverse("main:create_experience")
         self.assertEqual(self.client.get(create_url).status_code, 403)
         self.assertTrue(Experience.objects.filter(pk=self.experience.id).exists())
+
+    
+    def test_template_comments_stay_hidden(self):
+        # {# #} only works on one line; a longer note leaks into the page as text.
+        for user in (None, self.owner):
+            with self.subTest(user=getattr(user, "username", "visitor")):
+                if user is not None:
+                    self.client.force_login(user)
+                response = self.client.get(self.page_url)
+                self.assertEqual(response.status_code, 200)
+                self.assertNotContains(response, "{#")
+                self.assertNotContains(response, "#}")

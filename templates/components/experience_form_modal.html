@@ -1,9 +1,11 @@
-{# Add/edit experience modal (Popover API). Reuses the .project-form-modal
-   styles from Tutorial 05. experience.js switches it between two modes:
-   - create: POST /api/v1/experiences/ (owner only)
-   - edit:   PATCH /api/v1/experiences/<id>/ (Editor and owner)
-   The form's action points to the regular create_experience view as a
-   no-JavaScript fallback. #}
+{% comment %}
+Add/edit experience modal (Popover API). Reuses the .project-form-modal
+styles from Tutorial 05. experience.js switches it between two modes:
+- create: POST /api/v1/experiences/ (owner only)
+- edit:   PATCH /api/v1/experiences/<id>/ (Editor and owner)
+The form's action points to the regular create_experience view as a
+no-JavaScript fallback.
+{% endcomment %}
 
 <div id="experience-form-modal"
      class="project-form-modal"

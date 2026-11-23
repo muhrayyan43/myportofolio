@@ -7,8 +7,10 @@
 
 {% block content %}
 <main>
-    {# Config travels via data-* attributes so experience.js stays a
-       plain static file with no template tags inside it. #}
+    {% comment %}
+    Config travels via data-* attributes so experience.js stays a
+    plain static file with no template tags inside it.
+    {% endcomment %}
     <section class="project-section"
              id="experience-app"
              aria-busy="true"
@@ -20,9 +22,11 @@
              data-can-edit="{{ can_edit|yesno:'true,false' }}"
              data-can-delete="{{ can_create_or_delete|yesno:'true,false' }}">
 
-        {# Rendering the token makes Django set the csrftoken cookie that
-           getCookie() reads for every POST/PATCH/DELETE sent to the API,
-           including the star button used by Members and Editors. #}
+        {% comment %}
+        Rendering the token makes Django set the csrftoken cookie that
+        getCookie() reads for every POST/PATCH/DELETE sent to the API,
+        including the star button used by Members and Editors.
+        {% endcomment %}
         {% csrf_token %}
 
         <div class="container">
@@ -101,8 +105,10 @@
     </section>
 </main>
 
-{# One modal for both modes: owners use it to add and edit, Editors
-   only to edit. The API still enforces the rules on its own. #}
+{% comment %}
+One modal for both modes: owners use it to add and edit, Editors
+only to edit. The API still enforces the rules on its own.
+{% endcomment %}
 {% if can_edit %}
     {% include "components/experience_form_modal.html" %}
 {% endif %}
