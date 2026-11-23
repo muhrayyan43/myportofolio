@@ -116,6 +116,12 @@ else:
         }
     }
 
+# Django 6.x already uses these values by default; Django 5.2 (needed for the
+# PWS database) does not, so they are set here to keep behaviour unchanged.
+# BigAutoField matches the id column in main/migrations/0002_project.py.
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# Form URL fields keep treating "example.com" as https://example.com.
+FORMS_URLFIELD_ASSUME_HTTPS = True
 
 # Password validation
 # https://docs.djangoproject.com/en/6.1/ref/settings/#auth-password-validators
