@@ -83,10 +83,12 @@ class ProjectViewTest(TestCase):
 
 
 class ProjectFormPageTest(TestCase):
-    """The HTML create and edit pages render ProjectForm and save it."""
+    """Owner-only HTML create and edit pages for projects."""
 
     def setUp(self):
         self.owner = User.objects.create_superuser(username="owner", password="pw-12345")
+        self.editor = User.objects.create_user(username="editor", password="pw-12345")
+        self.editor.groups.add(Group.objects.create(name="Editor"))
         self.client.force_login(self.owner)
         self.project = Project.objects.create(
             title="Bot Pengingat Deadline", description="Bot Telegram.",
@@ -137,6 +139,26 @@ class ProjectFormPageTest(TestCase):
         self.assertContains(response, "Nama proyek tidak boleh hanya berisi tag HTML.")
         self.project.refresh_from_db()
         self.assertEqual(self.project.title, "Bot Pengingat Deadline")
+
+    def test_editor_gets_403_and_cannot_change_the_project(self):
+        self.client.force_login(self.editor)
+
+        self.assertEqual(self.client.get(self.edit_url).status_code, 403)
+        response = self.client.post(self.edit_url, {
+            "title": "Diubah Editor", "description": "Bot Telegram.",
+            "tech_stack": "Python", "year": 2025, "url": "",
+        })
+
+        self.assertEqual(response.status_code, 403)
+        self.project.refresh_from_db()
+        self.assertEqual(self.project.title, "Bot Pengingat Deadline")
+
+    def test_edit_button_is_only_enabled_for_the_owner(self):
+        for user, can_edit in [(self.owner, "true"), (self.editor, "false")]:
+            with self.subTest(user=user.username):
+                self.client.force_login(user)
+                response = self.client.get(reverse("main:show_project"))
+                self.assertContains(response, f'const CAN_EDIT = "{can_edit}"')
 
 
 class ExperiencePageTest(TestCase):

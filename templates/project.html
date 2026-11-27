@@ -86,7 +86,7 @@
     const LOGIN_URL = "{% url 'main:login' %}";
     const IS_SUPERUSER = "{{ user.is_superuser|yesno:'true,false' }}" === "true";
     const IS_AUTHENTICATED = "{{ user.is_authenticated|yesno:'true,false' }}" === "true";
-    const CAN_EDIT = "{{ can_edit|yesno:'true,false' }}" === "true";
+    const CAN_EDIT = "{{ can_create_or_delete|yesno:'true,false' }}" === "true";
     const SEARCH_DEBOUNCE_MS = 300;
 
     const loadingState = document.getElementById('loading');
