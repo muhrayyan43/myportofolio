@@ -1,93 +1,45 @@
 {% extends "base.html" %}
 
 {% block meta %}
-<title>Projects - {{ name }}</title>
+<title>{{ form_title }} - {{ name }}</title>
 {% endblock meta %}
 
 {% block content %}
 <main>
-    <section class="project-section" id="projects">
+    <section class="project-section" id="project-form">
         <div class="container">
 
             <div class="experience-intro">
                 <div>
-                    <p class="section-kicker">Yang pernah saya bangun</p>
+                    <p class="section-kicker">Proyek</p>
 
-                    <h1>Projects<span class="experience-star">✦</span></h1>
-
-                    <p class="experience-subtitle">
-                        Beberapa hal nyata yang<br>
-                        sudah saya kerjakan.
-                    </p>
-
-                    <a href="{% url 'main:create_project' %}" class="button project-add-button">
-                        + Tambah Proyek
-                    </a>
-                </div>
-
-                <div class="experience-count">
-                    <span class="count-number">
-                        {{ project_list|length|stringformat:"02d" }}
-                    </span>
-
-                    <span class="count-label">PROJECTS</span>
+                    <h1>{{ form_title }}<span class="experience-star">✦</span></h1>
                 </div>
             </div>
 
-            <div class="project-grid">
+            <form method="post" class="project-form">
+                {% csrf_token %}
 
-                {% for project in project_list %}
-
-                    <article class="project-card">
-
-                        <div class="project-card-top">
-                            <span class="experience-number">
-                                {{ forloop.counter|stringformat:"02d" }}
-                            </span>
-
-                            <span class="project-year">{{ project.year }}</span>
-                        </div>
-
-                        <h2 class="project-title">{{ project.title }}</h2>
-
-                        <p class="project-description">{{ project.description }}</p>
-
-                        <p class="project-tech">{{ project.tech_stack }}</p>
-
-                        <div class="card-actions">
-                            {% if project.url %}
-                                <a href="{{ project.url }}"
-                                   class="project-link"
-                                   target="_blank"
-                                   rel="noopener noreferrer">
-                                    Visit <span>↗</span>
-                                </a>
-                            {% endif %}
-
-                            <a href="{% url 'main:update_project' project.id %}"
-                               class="button button-small">
-                                Edit
-                            </a>
-
-                            {% include "components/project_delete_modal.html" %}
-                        </div>
-
-                    </article>
-
-                {% empty %}
-
-                    <div class="empty-state project-empty-state">
-                        <span class="experience-doodle">✦</span>
-                        <h2>Belum ada project</h2>
-                        <p>
-                            Project yang sudah dikerjakan akan muncul
-                            di sini.
-                        </p>
+                {% for field in form %}
+                    <div class="form-group">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% for error in field.errors %}
+                            <p class="form-error">{{ error }}</p>
+                        {% endfor %}
                     </div>
-
                 {% endfor %}
 
-            </div>
+                {% for error in form.non_field_errors %}
+                    <p class="form-error">{{ error }}</p>
+                {% endfor %}
+
+                <div class="form-actions">
+                    <button type="submit" class="button">{{ submit_label }}</button>
+                    <a href="{% url 'main:show_project' %}"
+                       class="button button-secondary">Batal</a>
+                </div>
+            </form>
 
         </div>
     </section>

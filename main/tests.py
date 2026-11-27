@@ -82,6 +82,63 @@ class ProjectViewTest(TestCase):
         self.assertEqual(response.resolver_match.view_name, "main:show_project")
 
 
+class ProjectFormPageTest(TestCase):
+    """The HTML create and edit pages render ProjectForm and save it."""
+
+    def setUp(self):
+        self.owner = User.objects.create_superuser(username="owner", password="pw-12345")
+        self.client.force_login(self.owner)
+        self.project = Project.objects.create(
+            title="Bot Pengingat Deadline", description="Bot Telegram.",
+            tech_stack="Python", year=2025,
+        )
+        self.create_url = reverse("main:create_project")
+        self.edit_url = reverse("main:update_project", args=[self.project.id])
+
+    def test_create_page_renders_every_project_field(self):
+        response = self.client.get(self.create_url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "project_form.html")
+        self.assertContains(response, '<form method="post"')
+        for name in ("title", "description", "tech_stack", "year", "url"):
+            self.assertContains(response, f'name="{name}"')
+
+    def test_create_page_saves_a_valid_project(self):
+        response = self.client.post(self.create_url, {
+            "title": "MyPortfolio Mobile", "description": "Aplikasi Flutter.",
+            "tech_stack": "Flutter, Dart", "year": 2026, "url": "",
+        })
+
+        self.assertRedirects(response, reverse("main:show_project"))
+        self.assertTrue(Project.objects.filter(title="MyPortfolio Mobile").exists())
+
+    def test_edit_page_is_prefilled_and_saves_changes(self):
+        response = self.client.get(self.edit_url)
+        self.assertContains(response, 'value="Bot Pengingat Deadline"')
+        self.assertContains(response, "Simpan Perubahan")
+
+        response = self.client.post(self.edit_url, {
+            "title": "Bot Pengingat Deadline Tugas", "description": "Bot Telegram.",
+            "tech_stack": "Python", "year": 2025, "url": "",
+        })
+
+        self.assertRedirects(response, reverse("main:show_project"))
+        self.project.refresh_from_db()
+        self.assertEqual(self.project.title, "Bot Pengingat Deadline Tugas")
+
+    def test_invalid_edit_shows_the_error_and_keeps_the_data(self):
+        response = self.client.post(self.edit_url, {
+            "title": "<b></b>", "description": "Bot Telegram.",
+            "tech_stack": "Python", "year": 2025, "url": "",
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Nama proyek tidak boleh hanya berisi tag HTML.")
+        self.project.refresh_from_db()
+        self.assertEqual(self.project.title, "Bot Pengingat Deadline")
+
+
 class ExperiencePageTest(TestCase):
     """The Experience page and the old HTML views follow the API's role rules."""
 
@@ -125,7 +182,6 @@ class ExperiencePageTest(TestCase):
         self.assertEqual(self.client.get(create_url).status_code, 403)
         self.assertTrue(Experience.objects.filter(pk=self.experience.id).exists())
 
-    
     def test_template_comments_stay_hidden(self):
         # {# #} only works on one line; a longer note leaks into the page as text.
         for user in (None, self.owner):
